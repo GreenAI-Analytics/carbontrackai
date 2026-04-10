@@ -19,6 +19,11 @@ This repository was initialized from the product brief and now includes:
 - App placeholders in `apps/web` and `apps/api`
 - Environment template and git ignore defaults
 
+## Planning Docs
+
+- [Build Plan](docs/build-plan.md)
+- [Architecture Draft](docs/architecture.md)
+
 ## Suggested Technical Direction
 
 - Frontend: PWA-capable web app (React/Next.js or similar)
