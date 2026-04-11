@@ -1,0 +1,29 @@
+{
+  "name": "carbontrackai",
+  "version": "1.0.0",
+  "description": "VSME-aligned carbon accounting platform for EU SMEs.",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @carbontrackai/api",
+    "dev:all": "npm run dev -w @carbontrackai/api -w @carbontrackai/web",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GreenAI-Analytics/carbontrackai.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GreenAI-Analytics/carbontrackai/issues"
+  },
+  "homepage": "https://github.com/GreenAI-Analytics/carbontrackai#readme"
+}

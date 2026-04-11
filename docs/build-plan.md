@@ -14,6 +14,43 @@ Initial release target:
 
 - A usable SME workflow from onboarding to annual Scope 1 and Scope 2 report export.
 
+## Current Implementation Status (as of 2026-04-12)
+
+Verified in workspace:
+
+- Frontend build status: `npm run build` in `apps/web` passes.
+- Frontend lint status: `npm run lint` in `apps/web` passes.
+- Monorepo workspaces configured at root (`apps/api`, `apps/web`).
+- Supabase schema/migrations created for core entities and RLS.
+- Authentication flow implemented in web app:
+  - `/signup`
+  - `/login`
+  - `/forgot-password`
+  - `/reset-password`
+  - `/onboarding`
+- Route protection implemented via proxy layer (`apps/web/proxy.ts`) — migrated from deprecated middleware convention to Next.js 16 proxy convention.
+- Dashboard foundation implemented:
+  - `/dashboard` overview
+  - `/dashboard/activity` (activity entry)
+  - `/dashboard/emissions` (calculation + breakdown)
+- Module 1 calculation engine implemented in web (`apps/web/lib/calculations.ts`):
+  - Scope 1 + Scope 2 (location-based)
+  - Total annual energy (MWh)
+  - Factor fallback strategy (country-specific -> EU/default fallback)
+- Full application branding implemented:
+  - CarbonTrackAI logo (`/public/img/carbontrack-ai-logo.png`) applied to header, dashboard nav, all auth/onboarding pages, and footer.
+  - GreenAI Analytics logo (`/public/img/greenai-analytics-logo.png`) displayed in footer with link to https://greenaianalytics.org.
+  - Site metadata icons set to CarbonTrackAI logo.
+  - Logos use transparent backgrounds; dark-surface contexts use CSS filter or white pill background for legibility.
+
+Current gaps vs MVP exit criteria:
+
+- Scope 2 market-based calculation path is not yet implemented end-to-end.
+- Export pipeline (Excel/PDF) not yet implemented in app/API flow.
+- Factor refresh jobs/provider adapters are not yet implemented as services.
+- CI pipeline and automated tests are not yet configured in repo.
+- Offline draft + sync behavior is not yet implemented.
+
 ## 2. Recommended Tech Stack
 
 ## Frontend (`apps/web`)
@@ -92,6 +129,12 @@ Exit criteria:
 
 - User completes annual data entry in less than 15 minutes for common SME profile.
 - Report export includes full factor provenance.
+
+Implementation note:
+
+- In progress and partially delivered in current codebase.
+- Data entry + Scope 1/2 location-based calculation are implemented.
+- Remaining work for full Phase 1 completion: market-based Scope 2, export artifacts, and validated provenance UX in reports.
 
 ## Phase 2: Factors Platform (Week 5 to Week 6)
 
@@ -217,6 +260,14 @@ Compliance readiness:
 8. Implement Excel and PDF export.
 9. Add audit view (factor source/version).
 10. Ship MVP beta to pilot SME users.
+
+Updated near-term execution order:
+
+1. Implement Scope 2 market-based path (including contractual/PPA override handling).
+2. Implement report export (Excel first, then PDF) from saved calculation runs.
+3. Add factor provenance panel in dashboard/report views (source + region + effective date).
+4. Add CI checks (build, lint, typecheck) at root workspace.
+5. Add baseline tests: calculation unit tests + onboarding/activity/emissions E2E smoke path.
 
 ## 10. Risks and Mitigations
 

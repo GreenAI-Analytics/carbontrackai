@@ -1,0 +1,28 @@
+{
+  "name": "@carbontrackai/api",
+  "version": "0.1.0",
+  "description": "Carbon Tracker API - Emissions calculation and reporting backend",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "supabase start",
+    "db:migrate": "supabase migration new",
+    "db:push": "supabase db push",
+    "db:pull": "supabase db pull",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "supabase",
+    "carbon",
+    "emissions",
+    "tracking"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4"
+  },
+  "devDependencies": {
+    "supabase": "^1.100.0"
+  }
+}
