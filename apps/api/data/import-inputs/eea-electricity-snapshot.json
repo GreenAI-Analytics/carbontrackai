@@ -1,0 +1,29 @@
+[
+  {
+    "country_code": "FR",
+    "country_name": "France",
+    "year": 2024,
+    "dataset_version": "2024_snapshot",
+    "factor": 0.000,
+    "source_url": "https://www.eea.europa.eu/en/analysis/indicators/greenhouse-gas-emission-intensity-of-1",
+    "license": "EEA standard re-use policy"
+  },
+  {
+    "country_code": "DE",
+    "country_name": "Germany",
+    "year": 2024,
+    "dataset_version": "2024_snapshot",
+    "factor": 0.000,
+    "source_url": "https://www.eea.europa.eu/en/analysis/indicators/greenhouse-gas-emission-intensity-of-1",
+    "license": "EEA standard re-use policy"
+  },
+  {
+    "country_code": "PL",
+    "country_name": "Poland",
+    "year": 2024,
+    "dataset_version": "2024_snapshot",
+    "factor": 0.000,
+    "source_url": "https://www.eea.europa.eu/en/analysis/indicators/greenhouse-gas-emission-intensity-of-1",
+    "license": "EEA standard re-use policy"
+  }
+]

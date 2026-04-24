@@ -1,6 +1,6 @@
 # CarbonTrackAI API Backend
 
-Node.js + Fastify backend for emissions calculations and factor integrations.
+Fastify service for Module 1 emissions calculation and country-specific factor resolution.
 
 ## Quick Start
 
@@ -10,40 +10,83 @@ npm install -w @carbontrackai/api
 
 # Configure environment
 cp .env.example .env.local
-# Update with your Supabase credentials
+# Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
 
-# Start development
+# Start API server
 npm run dev -w @carbontrackai/api
 ```
 
-## Architecture
+Default API URL: `http://localhost:4000`
 
-- **Database**: Supabase PostgreSQL with Row-Level Security
-- **Auth**: Supabase JWT-based authentication
-- **Validation**: Zod schemas (shared with frontend)
-- **Emission Factors**: ADEME (FR) + MITECO (ES) + Climatiq (EU27)
+## Implemented Endpoints
 
-## Key Features
+- `GET /health`
+- `GET /v1/providers`
+- `POST /v1/calculations/module1`
 
-- ✅ Module 1: Scope 1 & 2 emissions (Basic)
-- ✅ Module 2: Scope 3 emissions (Comprehensive)
-- ✅ Module 3: Reduction targets & transition planning
-- ✅ Module 4: Climate risk assessments
-- ✅ Module 5: Supply chain & product PCF
+`POST /v1/calculations/module1` expects:
 
-## Database Setup
+```json
+{
+	"countryCode": "FR",
+	"reportingYear": 2024,
+	"qualityMode": "reporting",
+	"records": [
+		{ "activity_type": "electricity", "quantity": 12000, "unit": "kWh" }
+	]
+}
+```
 
-See [BACKEND_SETUP.md](./BACKEND_SETUP.md) for:
-- Schema documentation
-- Authentication flows
-- Row-Level Security policies
-- Emission factor integration strategy
+## Phase 1 Country Integrations
 
-## Responsibilities
+- France: ADEME Base Carbone connector (`ademe_api`)
+- Spain: MITECO catalog connector (`miteco_api`)
+- Ireland: SEAI 2024 static conversion factors (`seai_2024_static`)
 
-- Emission calculations (Scope 1, 2, 3)
-- Emission factor integrations (Climatiq, national APIs)
-- Validation, conversion, and reporting payloads
-- Audit metadata for factor sources and versions
-- Excel import/export processing
-- User authentication & organization management
+If a live provider cannot return usable factor values, the API falls back to Supabase-seeded factors and then built-in EU fallback constants.
+
+## Factor Imports
+
+Two importer scripts are available under `apps/api/scripts`:
+
+- `npm run factors:import:eea -w @carbontrackai/api -- --input <path-to-eea-snapshot.json|csv> [--activate]`
+- `npm run factors:import:defra -w @carbontrackai/api -- --input <path-to-defra-snapshot.json|csv> [--activate]`
+
+Import flow:
+
+- Load a local JSON or CSV snapshot.
+- Normalize rows into the engine's factor schema.
+- Validate every row before promotion.
+- Write both valid and rejected rows to `factor_import_staging`.
+- Promote validated rows into `emission_factors` unless `--stage-only` is used.
+
+Importer flags:
+
+- `--dry-run`: validate only, no Supabase writes.
+- `--stage-only`: write staging rows only, do not promote.
+- `--activate`: activate the dataset version in `dataset_registry` after promotion.
+
+Expected snapshot shapes:
+
+- EEA electricity: `country_code`, `year`, `factor` or `kg_co2e_per_kwh`
+- DEFRA core fuels: `activity_type` or `fuel`, `unit`, `year`, `factor` or `kg_co2e_per_unit`
+
+Existing seed rows are backfilled into `dataset_registry` and linked with `import_batch_id` by migration `20260413000200_factor_import_staging_and_backfill.sql`.
+
+Hosted Supabase manual SQL option (if CLI push is unavailable):
+
+- `supabase/migrations/20260413000300_manual_governance_patch.sql`
+- `supabase/migrations/20260413000400_manual_seed_backfill.sql`
+
+Import placeholders to replace with real downloaded snapshots:
+
+- `data/import-inputs/eea-electricity-snapshot.json`
+- `data/import-inputs/defra-core-fuels-snapshot.json`
+
+Operational step-by-step commands are documented in `IMPORT_RUNBOOK.md`.
+
+## Notes
+
+- This service currently focuses on Module 1 (Scope 1 + Scope 2 location-based).
+- Scope 2 market-based, exports, and jobs are not implemented yet.
+- See [BACKEND_SETUP.md](./BACKEND_SETUP.md) for schema and RLS details.

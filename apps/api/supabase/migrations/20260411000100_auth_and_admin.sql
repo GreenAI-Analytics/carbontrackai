@@ -17,11 +17,25 @@
 -- {{ .Email }} - User's email address
 
 -- ============================================================================
--- HELPER FUNCTION: Check if user is system admin
+-- ADMIN ACCESS AUDIT TABLE
+-- ============================================================================
+
+CREATE TABLE public.admin_access_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  access_reason TEXT,
+  status VARCHAR(20) DEFAULT 'pending',
+  reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================================
+-- HELPER FUNCTION: Request admin access
 -- ============================================================================
 
 -- System admins are users with 'admin' role in their primary organization
--- and have is_primary = true in user_roles table
+-- and have is_primary = true in user_roles table.
 
 CREATE OR REPLACE FUNCTION public.request_admin_access(
   requesting_user_id UUID,
@@ -43,20 +57,6 @@ RETURNS TABLE(
     status,
     created_at;
 $$ LANGUAGE SQL;
-
--- ============================================================================
--- ADMIN ACCESS AUDIT TABLE
--- ============================================================================
-
-CREATE TABLE public.admin_access_requests (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  access_reason TEXT,
-  status VARCHAR(20) DEFAULT 'pending',
-  reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  reviewed_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Audit log for admin actions
 CREATE TABLE public.admin_audit_log (

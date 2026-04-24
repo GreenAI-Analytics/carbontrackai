@@ -4,9 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase-browser";
+import { EU_COUNTRIES } from "@/lib/eu-countries";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
+  const [countryCode, setCountryCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,10 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: {
+          full_name: fullName,
+          signup_country_code: countryCode,
+        },
         emailRedirectTo: `${window.location.origin}/onboarding`,
       },
     });
@@ -91,6 +96,26 @@ export default function SignupPage() {
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
                 placeholder="Jane Smith"
               />
+            </div>
+
+            <div>
+              <label htmlFor="country" className="mb-1 block text-sm font-medium text-gray-700">
+                Country
+              </label>
+              <select
+                id="country"
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                required
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+              >
+                <option value="">Select your country...</option>
+                {EU_COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

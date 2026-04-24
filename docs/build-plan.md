@@ -14,14 +14,15 @@ Initial release target:
 
 - A usable SME workflow from onboarding to annual Scope 1 and Scope 2 report export.
 
-## Current Implementation Status (as of 2026-04-12)
+## Current Implementation Status (as of 2026-04-13)
 
 Verified in workspace:
 
 - Frontend build status: `npm run build` in `apps/web` passes.
 - Frontend lint status: `npm run lint` in `apps/web` passes.
 - Monorepo workspaces configured at root (`apps/api`, `apps/web`).
-- Supabase schema/migrations created for core entities and RLS.
+- Supabase schema/migrations created for core entities and RLS (`apps/api/supabase/migrations`).
+- Backend runtime/API server code implemented in `apps/api/src` (Fastify + Zod + Supabase service client).
 - Authentication flow implemented in web app:
   - `/signup`
   - `/login`
@@ -33,10 +34,26 @@ Verified in workspace:
   - `/dashboard` overview
   - `/dashboard/activity` (activity entry)
   - `/dashboard/emissions` (calculation + breakdown)
-- Module 1 calculation engine implemented in web (`apps/web/lib/calculations.ts`):
+- Module 1 calculation flow implemented through API (`apps/api/src/index.js` + `apps/api/src/factor-service.js`):
   - Scope 1 + Scope 2 (location-based)
   - Total annual energy (MWh)
-  - Factor fallback strategy (country-specific -> EU/default fallback)
+  - Country integration adapters (FR/ADEME, ES/MITECO, IE/SEAI static 2024)
+  - Reporting mode fail-closed behavior on fallback or incomplete DB governance metadata
+  - Provider diagnostics + factor provenance in API response
+- Reporting governance schema is now available in hosted Supabase:
+  - `dataset_registry` table
+  - `emission_factors` governance columns (`source_version`, `license`, `import_batch_id`, validity/checksum fields)
+  - Seeded factor backfill linked to dataset batches (`import_batch_id`)
+- Manual SQL migration path added for hosted Supabase SQL Editor usage:
+  - `apps/api/supabase/migrations/20260413000300_manual_governance_patch.sql`
+  - `apps/api/supabase/migrations/20260413000400_manual_seed_backfill.sql`
+- Import placeholder inputs added for easy replacement with real snapshots:
+  - `apps/api/data/import-inputs/eea-electricity-snapshot.json`
+  - `apps/api/data/import-inputs/defra-core-fuels-snapshot.json`
+- Emissions persistence now includes:
+  - `factor_versions` payload with quality/provenance diagnostics
+  - `quality_summary` and `methodology_text` on `calculation_runs`
+  - Per-line audit writes to `calculation_line_items`
 - Full application branding implemented:
   - CarbonTrackAI logo (`/public/img/carbontrack-ai-logo.png`) applied to header, dashboard nav, all auth/onboarding pages, and footer.
   - GreenAI Analytics logo (`/public/img/greenai-analytics-logo.png`) displayed in footer with link to https://greenaianalytics.org.
@@ -47,9 +64,29 @@ Current gaps vs MVP exit criteria:
 
 - Scope 2 market-based calculation path is not yet implemented end-to-end.
 - Export pipeline (Excel/PDF) not yet implemented in app/API flow.
-- Factor refresh jobs/provider adapters are not yet implemented as services.
+- Factor refresh jobs are not yet implemented as scheduled services (adapters exist for FR/ES/IE).
 - CI pipeline and automated tests are not yet configured in repo.
 - Offline draft + sync behavior is not yet implemented.
+- Root one-command local full-stack dev now available via `npm run dev:all`.
+- Real annual EEA/DEFRA datasets are not yet imported/activated (current reporting path works with governed legacy seed linkage).
+
+## Implementation Matrix (Planned vs Built)
+
+| Area | Planned in build plan | Implemented now | Status |
+|---|---|---|---|
+| Monorepo structure | `apps/web` + `apps/api` workspaces | Root npm workspaces are configured and used | Implemented |
+| Web app foundation | Next.js app shell, landing page, auth, dashboard | Landing + auth + dashboard pages are implemented in `apps/web` | Implemented |
+| Auth and onboarding flow | Signup/login/reset/onboarding with org setup | Implemented in web app and backed by Supabase tables/RLS | Implemented |
+| Route protection | Protect dashboard/auth routes | Implemented via `apps/web/proxy.ts` | Implemented |
+| Module 1 inputs | Activity entry for fuel/electricity records | Implemented in `/dashboard/activity` with reporting period handling | Implemented |
+| Module 1 calculations | Scope 1 + Scope 2 location + market-based + MWh | Scope 1 + Scope 2 location + MWh implemented; market-based not present | Partial |
+| Calculation persistence | Save reproducible runs and show latest results | Implemented with upsert/read from `calculation_runs` | Implemented |
+| Exports | Excel/PDF report generation | No export UI/API pipeline implemented | Not implemented |
+| Factors service layer | Provider adapters + scheduled refresh jobs | Runtime adapters implemented for FR/ES/IE; refresh jobs not implemented | Partial |
+| Backend API service | Fastify/Nest runtime endpoints in `apps/api` | Fastify runtime endpoints implemented for health/providers/module1 calculation | Implemented |
+| CI + tests | PR CI (lint/typecheck/tests) + test suites | No `.github/workflows` and no test files found | Not implemented |
+| Offline mode | Draft local mode + sync reconciliation | Not implemented | Not implemented |
+| Branding rollout | Product + company branding across app | Implemented with logos in header/footer/auth/dashboard and linked company site | Implemented |
 
 ## 2. Recommended Tech Stack
 

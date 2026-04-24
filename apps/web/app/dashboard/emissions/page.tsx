@@ -9,7 +9,6 @@ import {
   ActivityType,
   BreakdownItem,
   CalculationResult,
-  calculateEmissions,
   formatMWh,
   formatTco2e,
 } from "@/lib/calculations";
@@ -35,6 +34,38 @@ type DisplayData = {
   calculatedAt: string;
 };
 
+type ApiCalculationResponse = {
+  countryCode: string;
+  reportingYear?: number;
+  qualityMode: "estimate" | "reporting";
+  quality?: {
+    reportingReady: boolean;
+    fallbackActivityTypes: string[];
+    databaseActivityTypes: string[];
+    governanceIssueActivityTypes?: string[];
+    inactiveDatasetActivityTypes?: string[];
+    unmanagedDatasetActivityTypes?: string[];
+  };
+  providerDiagnostics?: unknown[];
+  factorProvenance?: unknown[];
+  scope1Tco2e: number;
+  scope2LocationTco2e: number;
+  totalMWh: number;
+  breakdown: Array<
+    BreakdownItem & {
+      factorId?: string | null;
+      factorSourceVersion?: string | null;
+      factorLicense?: string | null;
+      appliedTier?: string | null;
+    }
+  >;
+};
+
+type UpsertedRun = {
+  id: string;
+  scope_type: "scope_1" | "scope_2_location" | "scope_2_market" | "scope_3";
+};
+
 export default function EmissionsPage() {
   const router = useRouter();
 
@@ -49,6 +80,7 @@ export default function EmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [countrySource, setCountrySource] = useState<"signup" | "organization" | "fallback">("fallback");
 
   const loadSavedRuns = useCallback(async (periodId: string) => {
     const { data } = await supabase
@@ -62,6 +94,17 @@ export default function EmissionsPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.replace("/login"); return; }
+
+      const signupCountry = user.user_metadata?.signup_country_code;
+      const normalizedSignupCountry =
+        typeof signupCountry === "string" && signupCountry.length === 2
+          ? signupCountry.toUpperCase()
+          : null;
+
+      if (normalizedSignupCountry) {
+        setCountryCode(normalizedSignupCountry);
+        setCountrySource("signup");
+      }
 
       const { data: roleData } = await supabase
         .from("user_roles")
@@ -80,7 +123,10 @@ export default function EmissionsPage() {
         .select("country_code")
         .eq("id", id)
         .single();
-      if (orgData) setCountryCode(orgData.country_code);
+      if (orgData && !normalizedSignupCountry) {
+        setCountryCode(orgData.country_code);
+        setCountrySource("organization");
+      }
 
       const { data: perData } = await supabase
         .from("reporting_periods")
@@ -132,29 +178,66 @@ export default function EmissionsPage() {
       return;
     }
 
-    const activityTypes = [...new Set(records.map((r) => r.activity_type))];
+    // 2. Call backend API for factor resolution + emissions calculation
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
-    // 2. Fetch emission factors (country-specific + EU-wide fallbacks)
-    const { data: factors, error: facErr } = await supabase
-      .from("emission_factors")
-      .select("activity_type, unit, region, value")
-      .in("activity_type", activityTypes)
-      .or(`region.eq.${countryCode},region.is.null`)
-      .or(`expiry_date.is.null,expiry_date.gt.${new Date().toISOString().split("T")[0]}`);
+    let result: CalculationResult;
+    let apiResult: ApiCalculationResponse | null = null;
 
-    if (facErr) { setError(facErr.message); setCalculating(false); return; }
+    try {
+      const response = await fetch(`${apiBaseUrl}/v1/calculations/module1`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          countryCode,
+          reportingYear: selectedYear,
+          qualityMode: "reporting",
+          records: records.map((record) => ({
+            id: record.id,
+            activity_type: record.activity_type as ActivityType,
+            quantity: Number(record.quantity),
+            unit: record.unit,
+          })),
+        }),
+      });
 
-    // 3. Run calculation
-    const result = calculateEmissions(
-      records as { id: string; activity_type: ActivityType; quantity: number; unit: string }[],
-      factors ?? [],
-      countryCode
-    );
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setError(
+          body?.error ??
+            "Reporting-grade factors are unavailable for one or more activities."
+        );
+        setCalculating(false);
+        return;
+      }
 
-    setCalcResult(result);
+      apiResult = (await response.json()) as ApiCalculationResponse;
+
+      result = {
+        scope1Tco2e: apiResult.scope1Tco2e,
+        scope2LocationTco2e: apiResult.scope2LocationTco2e,
+        totalMWh: apiResult.totalMWh,
+        breakdown: apiResult.breakdown,
+      };
+    } catch {
+      setError("Could not reach emissions API. Ensure apps/api is running on port 4000.");
+      setCalculating(false);
+      return;
+    }
+
+    const factorVersionPayload = {
+      generated_at: new Date().toISOString(),
+      country: countryCode,
+      reporting_year: apiResult?.reportingYear ?? selectedYear,
+      source: "module1_api",
+      quality_mode: apiResult?.qualityMode ?? "reporting",
+      quality_summary: apiResult?.quality ?? null,
+      provider_diagnostics: apiResult?.providerDiagnostics ?? [],
+      factor_provenance: apiResult?.factorProvenance ?? [],
+    };
 
     // 4. Save / upsert calculation runs
-    await supabase.from("calculation_runs").upsert(
+    const { data: upsertedRuns, error: runUpsertError } = await supabase.from("calculation_runs").upsert(
       [
         {
           organization_id: orgId,
@@ -163,7 +246,10 @@ export default function EmissionsPage() {
           total_emissions: result.scope1Tco2e,
           total_energy: result.totalMWh,
           breakdown: result.breakdown.filter((b) => b.scope === "scope_1"),
-          factor_versions: { generated_at: new Date().toISOString(), country: countryCode },
+          factor_versions: factorVersionPayload,
+          quality_summary: apiResult?.quality ?? null,
+          methodology_text:
+            "Scope 1/2 location-based calculated via module1 API using reporting mode; activity-first factor hierarchy with provenance tracking.",
         },
         {
           organization_id: orgId,
@@ -172,12 +258,79 @@ export default function EmissionsPage() {
           total_emissions: result.scope2LocationTco2e,
           total_energy: result.totalMWh,
           breakdown: result.breakdown.filter((b) => b.scope === "scope_2"),
-          factor_versions: { generated_at: new Date().toISOString(), country: countryCode },
+          factor_versions: factorVersionPayload,
+          quality_summary: apiResult?.quality ?? null,
+          methodology_text:
+            "Scope 1/2 location-based calculated via module1 API using reporting mode; activity-first factor hierarchy with provenance tracking.",
         },
       ],
       { onConflict: "organization_id,reporting_period_id,scope_type" }
+    ).select("id, scope_type");
+
+    if (runUpsertError) {
+      setError(runUpsertError.message);
+      setCalculating(false);
+      return;
+    }
+
+    const runRows = (upsertedRuns ?? []) as UpsertedRun[];
+    const runIds = runRows.map((r) => r.id);
+
+    if (runIds.length > 0) {
+      const lineItemsByScope = {
+        scope_1: apiResult?.breakdown.filter((item) => item.scope === "scope_1") ?? [],
+        scope_2_location:
+          apiResult?.breakdown.filter((item) => item.scope === "scope_2") ?? [],
+      };
+
+      await supabase
+        .from("calculation_line_items")
+        .delete()
+        .in("calculation_run_id", runIds);
+
+      const lineInserts = runRows.flatMap((run) => {
+        const scoped =
+          run.scope_type === "scope_1"
+            ? lineItemsByScope.scope_1
+            : run.scope_type === "scope_2_location"
+            ? lineItemsByScope.scope_2_location
+            : [];
+
+        return scoped.map((item) => ({
+          calculation_run_id: run.id,
+          category: "module_1",
+          activity_type: item.activityType,
+          activity_value: item.quantity,
+          activity_unit: item.unit,
+          factor_id: item.factorId ?? null,
+          applied_factor_value: item.factorValue,
+          applied_tier: item.appliedTier ?? null,
+          emissions_kgco2e: item.emissionsKgCo2e,
+          uncertainty_low_kg: null,
+          uncertainty_high_kg: null,
+          provenance: {
+            factor_region: item.factorRegion,
+            factor_provider: item.factorProvider,
+            factor_source_version: item.factorSourceVersion ?? null,
+            factor_license: item.factorLicense ?? null,
+          },
+        }));
+      });
+
+      if (lineInserts.length > 0) {
+        const { error: lineInsertError } = await supabase
+          .from("calculation_line_items")
+          .insert(lineInserts);
+
+        if (lineInsertError) {
+          setError(lineInsertError.message);
+          setCalculating(false);
+          return;
+        }
+      }
     );
 
+    setCalcResult(result);
     await loadSavedRuns(selectedPeriodId);
     setCalculating(false);
   }
@@ -215,7 +368,7 @@ export default function EmissionsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Emissions</h1>
           <p className="text-gray-600">
-            Scope 1 &amp; 2 results for your organisation ({countryCode} grid factors applied).
+            Scope 1 &amp; 2 results for your organisation ({countryCode} grid factors applied, source: {countrySource}).
           </p>
         </div>
         <Link

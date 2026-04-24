@@ -11,8 +11,10 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev": "npm run dev -w @carbontrackai/api",
-    "dev:all": "npm run dev -w @carbontrackai/api -w @carbontrackai/web",
+    "dev": "npm run dev:web",
+    "dev:web": "npm run dev -w @carbontrackai/web",
+    "dev:api": "npm run dev -w @carbontrackai/api",
+    "dev:all": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/GreenAI-Analytics/carbontrackai/issues"
   },
-  "homepage": "https://github.com/GreenAI-Analytics/carbontrackai#readme"
+  "homepage": "https://github.com/GreenAI-Analytics/carbontrackai#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }
