@@ -25,5 +25,8 @@
   "bugs": {
     "url": "https://github.com/GreenAI-Analytics/carbontrackai/issues"
   },
-  "homepage": "https://github.com/GreenAI-Analytics/carbontrackai#readme"
+  "homepage": "https://github.com/GreenAI-Analytics/carbontrackai#readme",
+  "dependencies": {
+    "pg": "^8.20.0"
+  }
 }

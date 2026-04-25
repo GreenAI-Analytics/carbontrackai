@@ -3,9 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +26,7 @@ export default function SignupPage() {
       return;
     }
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -39,10 +41,19 @@ export default function SignupPage() {
       return;
     }
 
+    setLoading(false);
+
+    // If the user session was created immediately (email confirmations disabled),
+    // redirect straight to onboarding
+    if (data?.user?.aud === "authenticated" || data?.session) {
+      router.push("/onboarding");
+      return;
+    }
+
+    // Otherwise, show confirmation email message
     setMessage(
       "Account created! Check your inbox and click the confirmation link to continue."
     );
-    setLoading(false);
   }
 
   return (

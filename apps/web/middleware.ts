@@ -6,7 +6,7 @@ const PROTECTED = ["/dashboard", "/onboarding"];
 // Routes that logged-in users should not revisit
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   const supabase = createServerClient(
