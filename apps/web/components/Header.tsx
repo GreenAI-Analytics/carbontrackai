@@ -18,7 +18,7 @@ export function Header() {
 
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-gray-600 hover:text-gray-900">
-            Features
+            ESRS Modules
           </a>
           <a href="#why" className="text-gray-600 hover:text-gray-900">
             Why Choose Us

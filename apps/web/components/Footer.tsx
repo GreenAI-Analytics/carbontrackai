@@ -17,7 +17,7 @@ export function Footer() {
               />
             </div>
             <p className="text-sm">
-              Carbon accounting for EU SMEs, aligned with VSME standards.
+              CSRD/ESRS-compliant ESG reporting for EU SMEs. One platform for Environmental, Social, and Governance disclosures.
             </p>
             <div className="mt-4">
               <p className="text-xs uppercase tracking-wide text-gray-400">Built by</p>
@@ -40,11 +40,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Product</h4>
+            <h4 className="text-white font-semibold mb-4">Platform</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#features" className="hover:text-primary-400">
-                  Features
+                <a href="#esrs-modules" className="hover:text-primary-400">
+                  ESRS Modules
                 </a>
               </li>
               <li>
@@ -53,8 +53,8 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-400">
-                  Roadmap
+                <a href="#why" className="hover:text-primary-400">
+                  Why CarbonTrackAI
                 </a>
               </li>
             </ul>

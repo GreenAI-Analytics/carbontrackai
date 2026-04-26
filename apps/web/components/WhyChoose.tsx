@@ -1,39 +1,39 @@
 const reasons = [
   {
     icon: "🇪🇺",
-    title: "VSME-Compliant",
+    title: "CSRD & ESRS Compliant",
     description:
-      "Designed specifically for the EU Small and Medium-sized Enterprise (VSME) reporting framework.",
+      "Fully aligned with the European Sustainability Reporting Standards (ESRS E1–E5, S1–S4, G1) and the EU Taxonomy Regulation — built for CSRD assurance readiness.",
   },
   {
-    icon: "💚",
-    title: "Action-Focused",
+    icon: "📋",
+    title: "Full ESG Coverage",
     description:
-      "We focus on real reductions, not just compliance. Every calculation drives toward net-zero.",
+      "Not just carbon. Track Environmental (climate, pollution, water, biodiversity, circular economy), Social (workforce, value chain, communities, consumers), and Governance metrics in one place.",
   },
   {
-    icon: "📊",
-    title: "Proportionate Data",
+    icon: "🎯",
+    title: "VSME-First Design",
     description:
-      "Activity-based (kWh, km) by default. Spend-based only as fallback—keeping it simple for SMEs.",
+      "Proportionate for EU SMEs (< 250 employees). Three modes — VSME-Lite, VSME-Full, CSRD-Full — so you only see what's relevant to your compliance obligations.",
   },
   {
     icon: "🔐",
-    title: "Secure & Private",
+    title: "Audit-Ready & Secure",
     description:
-      "Your emissions data is yours. Transparent calculations, verifiable factors, no black boxes.",
+      "Immutable report snapshots, full change history, and ESRS datapoint traceability. Every metric is designed for limited assurance verification.",
   },
   {
     icon: "🌍",
-    title: "Multi-Country",
+    title: "Multi-Country by Default",
     description:
-      "25+ EU countries supported with country-specific electricity factors and regulatory data.",
+      "25+ EU countries supported with country-specific emission factors (ADEME, MITECO, Climatiq, EEA), social benchmarks, and governance norms.",
   },
   {
     icon: "💰",
-    title: "Affordable",
+    title: "Free Climate + Materiality Tier",
     description:
-      "Free basic module for Scope 1 & 2. Premium modules ≤ €99/month. No enterprise lock-in.",
+      "Climate (E1), Double Materiality assessment, and Report Builder are always free. Unlock all E/S/G modules + EU Taxonomy for €99/mo. No enterprise lock-in.",
   },
 ];
 
@@ -44,7 +44,7 @@ export function WhyChoose() {
         <div className="text-center mb-16">
           <h2 className="section-header">Why Choose CarbonTrackAI?</h2>
           <p className="section-description">
-            Built by carbon experts for European SMEs
+            The one-stop ESG reporting platform built for European SMEs
           </p>
         </div>
 
