@@ -90,78 +90,73 @@ carbontrackai/
 ```
 apps/web/
 ├── app/
-│   │   ├── dashboard/
-│   │   │   ├── activity/
-│   │   │   │   └── page.tsx              # Energy/fuel activity data entry (Scope 1 & 2)
-│   │   │   ├── emissions/
-│   │   │   │   └── page.tsx              # Scope 1 & 2 calculation results + run trigger
-│   │   │   ├── esg/                      ← EXPANDED: full ESG data collection
-│   │   │   │   ├── narrative/            ← NEW: ESRS 2 narrative disclosures
-│   │   │   │   │   ├── governance/       #     ESRS 2 GOV-1 to GOV-3: Board oversight, roles, internal controls
-│   │   │   │   │   ├── strategy/         #     ESRS 2 SBM-1 to SBM-3: Business model, value chain, stakeholder mapping
-│   │   │   │   │   ├── iro-management/   #     ESRS 2 IRO-1 to IRO-2: Due diligence, risk management
-│   │   │   │   │   └── policies/         #     Policy document upload & registry
-│   │   │   │   ├── environmental/        #   ESRS E1–E5 data entry + dashboards
-│   │   │   │   │   ├── climate/          #     E1: Carbon (existing), transition plan
-│   │   │   │   │   ├── pollution/        #     E2: Air/water/soil pollutant inventory
-│   │   │   │   │   ├── water/            #     E3: Water consumption, discharge
-│   │   │   │   │   ├── biodiversity/     #     E4: Site proximity to sensitive areas
-│   │   │   │   │   └── circular/         #     E5: Material flows, waste, recycling
-│   │   │   │   ├── social/               #   ESRS S1–S4 data entry + dashboards
-│   │   │   │   │   ├── workforce/        #     S1: Headcount, diversity, turnover, H&S, policies, engagement
-│   │   │   │   │   ├── valuechain/       #     S2: Supply chain social audits
-│   │   │   │   │   ├── communities/      #     S3: Community engagement, impact
-│   │   │   │   │   └── consumers/        #     S4: Product safety, customer health
-│   │   │   │   └── governance/           #   ESRS G1 data entry + dashboards
-│   │   │   │       ├── ethics/           #     Anti-corruption, code of conduct
-│   │   │   │       ├── compliance/       #     Regulatory compliance, fines
-│   │   │   │       └── dataprivacy/      #     GDPR breaches, data protection
-│   ├── esrs2/                    # ESRS 2 General Disclosures (narrative)
-│   │   │   ├── governance/           #   Board oversight, management roles, internal controls
-│   │   ├── strategy/             #   Business model, value chain, stakeholder mapping
-│   │   └── iro-management/       #   Due diligence, risk management integration
-│   ├── materiality/              # Double materiality assessment wizard
-│   ├── taxonomy/   │                 # EU Taxonomy alignment assessment
-│   ├── reports/ │                    # CSRD-ready report generation + exports
-│   ├── layout.ts │  x                # Dashboard shell (header + sidebar nav)
-│   └── page.tsx   │                  # Dashboard overview (ESG KPI cards, checklist, modules)
+│   ├── dashboard/
+│   │   ├── activity/
+│   │   │   └── page.tsx                    # Energy/fuel activity data entry (Scope 1 & 2)
+│   │   ├── emissions/
+│   │   │   └── page.tsx                    # Scope 1 & 2 calculation results + run trigger
+│   │   ├── esg/
+│   │   │   ├── environmental/
+│   │   │   │   ├── climate/page.tsx        # E1 placeholder
+│   │   │   │   ├── pollution/page.tsx      # E2 placeholder
+│   │   │   │   ├── water/page.tsx          # E3 placeholder
+│   │   │   │   ├── biodiversity/page.tsx   # E4 placeholder
+│   │   │   │   └── circular/page.tsx       # E5 placeholder
+│   │   │   ├── social/
+│   │   │   │   ├── workforce/page.tsx      # S1 placeholder
+│   │   │   │   ├── valuechain/page.tsx     # S2 placeholder
+│   │   │   │   ├── communities/page.tsx    # S3 placeholder
+│   │   │   │   └── consumers/page.tsx      # S4 placeholder
+│   │   │   ├── governance/
+│   │   │   │   ├── ethics/page.tsx         # G1 ethics placeholder
+│   │   │   │   ├── compliance/page.tsx     # G1 compliance placeholder
+│   │   │   │   └── dataprivacy/page.tsx    # G1 data privacy placeholder
+│   │   │   └── general/
+│   │   │       ├── governance/page.tsx     # ESRS 2 GOV/SBM placeholder
+│   │   │       └── iro-management/page.tsx # ESRS 2 IRO placeholder
+│   │   ├── materiality/page.tsx            # Double materiality placeholder
+│   │   ├── taxonomy/page.tsx               # EU Taxonomy placeholder
+│   │   ├── reports/page.tsx                # Report builder placeholder
+│   │   ├── settings/page.tsx               # Settings placeholder
+│   │   ├── layout.tsx                      # Dashboard shell (header + sidebar nav)
+│   │   └── page.tsx                        # Dashboard overview (ESG pillar cards, carbon KPIs, checklist)
 │   ├── forgot-password/
-│   │   └── page.tsx                  # Password reset request form
+│   │   └── page.tsx                        # Password reset request form
 │   ├── login/
-│   │   └── page.tsx                  # Email + password login
+│   │   └── page.tsx                        # Email + password login
 │   ├── onboarding/
-│   │   └── page.tsx                  # Multi-step onboarding (org → sector → ESG scope)
+│   │   └── page.tsx                        # Multi-step onboarding (org → sector → ESG scope)
 │   ├── reset-password/
-│   │   └── page.tsx                  # New password creation
+│   │   └── page.tsx                        # New password creation
 │   ├── signup/
-│   │   └── page.tsx                  # Registration (name, email, password)
+│   │   └── page.tsx                        # Registration (name, email, password)
 │   ├── favicon.ico
-│   ├── globals.css                   # Tailwind import + base styles
-│   ├── layout.tsx                    # Root layout (metadata, icons)
-│   └── page.tsx                      # Marketing homepage (Hero, ESG Modules, WhyChoose, CTA, Footer)
+│   ├── globals.css                         # Tailwind import + base styles
+│   ├── layout.tsx                          # Root layout (metadata, icons)
+│   └── page.tsx                            # Marketing homepage (Hero, ESG Modules, WhyChoose, CTA, Footer)
 ├── components/
-│   ├── CTA.tsx                       # Call-to-action (Start Free ESG Reporting)
-│   ├── DashboardNav.tsx              # Sidebar nav (expanded for ESG sections)
-│   ├── Footer.tsx                    # Site footer (logo, links, brand attribution)
-│   ├── Header.tsx                    # Nav bar (logo, nav links, login/signup CTAs)
-│   ├── Hero.tsx                      # Landing hero (ESG messaging)
-│   ├── Modules.tsx                   # ESG module overview (E, S, G pillars)
-│   ├── SignOutButton.tsx             # Supabase sign-out + redirect
-│   └── WhyChoose.tsx                 # Value proposition grid (ESG angles)
+│   ├── CTA.tsx                             # Call-to-action (Start Free ESG Reporting)
+│   ├── DashboardNav.tsx                    # Sidebar nav (7 groups, 21 ESG links)
+│   ├── Footer.tsx                          # Site footer (logo, links, brand attribution)
+│   ├── Header.tsx                          # Nav bar (logo, nav links, login/signup CTAs)
+│   ├── Hero.tsx                            # Landing hero (ESG messaging)
+│   ├── Modules.tsx                         # ESG module overview (Free + Comprehensive tiers)
+│   ├── SignOutButton.tsx                   # Supabase sign-out + redirect
+│   └── WhyChoose.tsx                       # Value proposition grid (CSRD/ESRS angles)
 ├── lib/
-│   ├── calculations.ts               # Carbon calculation engine (Scope 1 & 2)
-│   ├── esg-scoring.ts                ← NEW: ESG composite scoring & benchmarking
-│   ├── materiality.ts                ← NEW: Double materiality assessment logic
-│   ├── taxonomy.ts                   ← NEW: EU Taxonomy alignment calculator
-│   ├── social-metrics.ts             ← NEW: S1–S4 metric computation
-│   ├── governance-metrics.ts         ← NEW: G1 metric computation
-│   ├── narrative-disclosures.ts      ← NEW: ESRS 2 narrative disclosure helpers
-│   ├── assurance.ts                  ← NEW: Change history & evidence tracking
-│   └── supabase-browser.ts           # Supabase client singleton
+│   ├── calculations.ts                     # Carbon calculation engine (Scope 1 & 2)
+│   ├── esg-scoring.ts                      # Planned: ESG composite scoring
+│   ├── materiality.ts                      # Planned: Double materiality logic
+│   ├── taxonomy.ts                         # Planned: EU Taxonomy calculator
+│   ├── social-metrics.ts                   # Planned: S1–S4 metric computation
+│   ├── governance-metrics.ts               # Planned: G1 metric computation
+│   ├── narrative-disclosures.ts            # Planned: ESRS 2 narrative helpers
+│   ├── assurance.ts                        # Planned: Change history & evidence
+│   └── supabase-browser.ts                 # Supabase client singleton
 ├── public/
-│   └── img/                          # Static images (logos, icons)
-├── middleware.ts                     # Route protection
-├── proxy.ts                          # Route protection (legacy/Next.js 16)
+│   └── img/                                # Static images (logos, icons)
+├── proxy.ts                                # Route protection (Next.js 16 convention)
+├── middleware.ts                           # Removed (superseded by proxy.ts)
 ├── next.config.ts
 ├── tailwind.config.ts
 ├── tsconfig.json
@@ -216,33 +211,33 @@ The sidebar hides modules not applicable to the SME's scope.
 | **Overview** | `/dashboard` | — | ✅ Implemented |
 | | | | |
 | **🌍 Environmental** | | | |
-| → Energy & Emissions | `/dashboard/esg/environmental/climate` | ESRS E1 | Partial (Scope 1&2 done) |
-| → Pollution | `/dashboard/esg/environmental/pollution` | ESRS E2 | ❌ Not built |
-| → Water | `/dashboard/esg/environmental/water` | ESRS E3 | ❌ Not built |
-| → Biodiversity | `/dashboard/esg/environmental/biodiversity` | ESRS E4 | ❌ Not built |
-| → Circular Economy | `/dashboard/esg/environmental/circular` | ESRS E5 | ❌ Not built |
+| → Energy & Emissions | `/dashboard/esg/environmental/climate` | ESRS E1 | 🟡 Placeholder (Scope 1&2 done) |
+| → Pollution | `/dashboard/esg/environmental/pollution` | ESRS E2 | 🟡 Placeholder (DB schema ready) |
+| → Water | `/dashboard/esg/environmental/water` | ESRS E3 | 🟡 Placeholder (DB schema ready) |
+| → Biodiversity | `/dashboard/esg/environmental/biodiversity` | ESRS E4 | 🟡 Placeholder (DB schema ready) |
+| → Circular Economy | `/dashboard/esg/environmental/circular` | ESRS E5 | 🟡 Placeholder (DB schema ready) |
 | | | | |
 | **👥 Social** | | | |
-| → Workforce | `/dashboard/esg/social/workforce` | ESRS S1 | ❌ Not built |
-| → Value Chain | `/dashboard/esg/social/valuechain` | ESRS S2 | ❌ Not built |
-| → Communities | `/dashboard/esg/social/communities` | ESRS S3 | ❌ Not built |
-| → Consumers | `/dashboard/esg/social/consumers` | ESRS S4 | ❌ Not built |
+| → Workforce | `/dashboard/esg/social/workforce` | ESRS S1 | 🟡 Placeholder (DB schema ready) |
+| → Value Chain | `/dashboard/esg/social/valuechain` | ESRS S2 | 🟡 Placeholder (DB schema ready) |
+| → Communities | `/dashboard/esg/social/communities` | ESRS S3 | 🟡 Placeholder (DB schema ready) |
+| → Consumers | `/dashboard/esg/social/consumers` | ESRS S4 | 🟡 Placeholder (DB schema ready) |
 | | | | |
 | **🏛️ Governance** | | | |
-| → Business Ethics | `/dashboard/esg/governance/ethics` | ESRS G1 | ❌ Not built |
-| → Compliance | `/dashboard/esg/governance/compliance` | ESRS G1 | ❌ Not built |
-| → Data Privacy | `/dashboard/esg/governance/dataprivacy` | ESRS G1 + GDPR | ❌ Not built |
+| → Business Ethics | `/dashboard/esg/governance/ethics` | ESRS G1 | 🟡 Placeholder (DB schema ready) |
+| → Compliance | `/dashboard/esg/governance/compliance` | ESRS G1 | 🟡 Placeholder (DB schema ready) |
+| → Data Privacy | `/dashboard/esg/governance/dataprivacy` | ESRS G1 + GDPR | 🟡 Placeholder (DB schema ready) |
 | | | | |
 | **📋 General Disclosures (ESRS 2)** | | | |
-| → Governance & Strategy | `/dashboard/esg/general/governance` | ESRS 2 (GOV, SBM) | ❌ Not built |
-| → IRO Management | `/dashboard/esg/general/iro-management` | ESRS 2 (IRO) | ❌ Not built |
+| → Governance & Strategy | `/dashboard/esg/general/governance` | ESRS 2 (GOV, SBM) | 🟡 Placeholder (DB schema ready) |
+| → IRO Management | `/dashboard/esg/general/iro-management` | ESRS 2 (IRO) | 🟡 Placeholder (DB schema ready) |
 | | | | |
 | **⚖️ Overarching** | | | |
-| → Double Materiality | `/dashboard/materiality` | ESRS 1, IRO-1 | ❌ Not built |
-| → EU Taxonomy | `/dashboard/taxonomy` | EU Taxonomy Reg. | ❌ Not built |
+| → Double Materiality | `/dashboard/materiality` | ESRS 1, IRO-1 | 🟡 Placeholder (DB schema ready) |
+| → EU Taxonomy | `/dashboard/taxonomy` | EU Taxonomy Reg. | 🟡 Placeholder (DB schema ready) |
 | | | | |
-| **📄 Reports** | `/dashboard/reports` | All ESRS | ❌ Not built |
-| **⚙️ Settings** | `/dashboard/settings` | — | ❌ Not built |
+| **📄 Reports** | `/dashboard/reports` | All ESRS | 🟡 Placeholder (DB schema ready) |
+| **⚙️ Settings** | `/dashboard/settings` | — | 🟡 Placeholder |
 
 ### 2.5 Carbon Calculation Engine (`lib/calculations.ts`)
 
@@ -290,14 +285,15 @@ apps/api/
 │   │   ├── 20260411000200_extended_modules.sql        # Scope 3, targets, risk, supply chain
 │   │   ├── 20260411000300_seed_emission_factors.sql   # EU27 carbon factor seeding
 │   │   ├── 20260411000400_fix_signup_rls_policies.sql # Fix INSERT policies
-│   │   ├── 20260411000500_esg_social_tables.sql       ← NEW: Social (S1–S4) schema
-│   │   ├── 20260411000600_esg_governance_tables.sql   ← NEW: Governance (G1) schema
-│   │   ├── 20260411000700_esg_environmental_ext.sql   ← NEW: E2–E5 extended tables
-│   │   ├── 20260411000800_double_materiality.sql      ← NEW: Materiality assessment schema
-│   │   ├── 20260411000900_eu_taxonomy.sql             ← NEW: EU Taxonomy alignment schema
-│   │   ├── 20260411001000_esrs2_general_disclosures.sql  ← NEW: ESRS 2 narrative tables
-│   │   ├── 20260411001100_esrs_datapoint_taxonomy.sql    ← NEW: Datapoint reference
-│   │   └── 20260411001200_assurance_change_tracking.sql  ← NEW: Change history & evidence
+│   │   ├── 20260411000500_esg_social_schema.sql           # Social (S1–S4) schema — 18 tables
+│   │   ├── 20260411000600_esg_governance_schema.sql       # Governance (G1) schema — 7 tables
+│   │   ├── 20260411000700_esg_environmental_extended_schema.sql  # E2–E5 extended — 6 tables
+│   │   ├── 20260411000800_esg_double_materiality_schema.sql     # Double materiality — 3 tables
+│   │   ├── 20260411000900_esg_taxonomy_schema.sql              # EU Taxonomy — 2 tables
+│   │   ├── 20260411001000_esrs2_general_disclosures.sql        # ESRS 2 narrative — 7 tables
+│   │   ├── 20260411001100_esrs_datapoint_taxonomy.sql          # Datapoint reference — 27 seeds
+│   │   ├── 20260411001200_assurance_change_tracking.sql        # Change history & evidence — 3 tables
+│   │   └── 20260411001300_update_plan_type_and_feature_flags.sql # Plan type enum + ESG flags
 │   ├── .temp/                                         # Supabase local runtime
 │   └── config.toml
 ├── .gitignore
@@ -311,7 +307,7 @@ apps/api/
 
 | Table | ESRS | Purpose | Key Columns |
 |---|---|---|---|
-| `organizations` | — | SME accounts | `id`, `name`, `country_code`, `sector`, `base_year`, `employee_count`, `revenue_eur`, `lei_code`, `platform_mode` (vsme_lite/vsme_full/csrd_full) |
+| `organizations` | — | SME accounts | `id`, `name`, `country_code`, `sector`, `base_year`, `created_at`, `updated_at` |
 | `user_roles` | — | User-org mapping | `user_id`, `organization_id`, `role`, `is_primary` |
 | `reporting_periods` | ESRS 1 | Annual reporting windows | `organization_id`, `year`, `start_date`, `end_date`, `is_locked` |
 | `activity_records` | E1 | Energy/fuel usage | `organization_id`, `reporting_period_id`, `activity_type`, `quantity`, `unit`, `month`, soft-delete |
@@ -323,9 +319,6 @@ apps/api/
 | `export_jobs` | — | Export tracking | Format, file path, status |
 | `feature_flag_subscriptions` | — | ESG module gating | `plan_type` (vsme_lite/vsme_full/csrd_full), per-module boolean flags, `expires_at` |
 
-
-| Table | ESRS | Purpose | Key Columns |
-|---|---|---|---|
 
 
 ### 3.4 Auth & Admin Tables (Migration 2)
@@ -351,7 +344,7 @@ apps/api/
 | Climate Risk | `physical_assets`, `climate_risk_assessments` | ESRS E1-9, E4 |
 | Supply Chain | `supplier_contacts`, `supplier_data_requests`, `product_carbon_footprints` | ESRS S2, E1, E5 |
 
-### 3.6 NEW: Social Schema (Migration 5 — ESRS S1–S4)
+### 3.6 Social Schema (Migration 5 — ESRS S1–S4)
 
 | Table | ESRS | Purpose | Key Columns |
 |---|---|---|---|
@@ -374,7 +367,7 @@ apps/api/
 | `community_engagement` | S3 | Local impact | Engagement type, stakeholder count, complaints received |
 | `product_safety_incidents` | S4 | Consumer safety | Incident type, severity, recalls, fines |
 
-### 3.7 NEW: Governance Schema (Migration 6 — ESRS G1)
+### 3.7 Governance Schema (Migration 6 — ESRS G1)
 
 | Table | Purpose | Key Columns |
 |---|---|---|
@@ -386,7 +379,7 @@ apps/api/
 | `supplier_conduct_assessments` | G1-2, S2 | Supplier code violations, audits, corrective actions |
 | `political_contributions` | G1-5 | Amount, recipient, country, approval |
 
-### 3.8 NEW: Environmental Extended Schema (Migration 7 — ESRS E2–E5)
+### 3.8 Environmental Extended Schema (Migration 7 — ESRS E2–E5)
 
 | Table | ESRS | Purpose | Key Columns |
 |---|---|---|---|
@@ -397,7 +390,7 @@ apps/api/
 | `material_flows` | E5 | Resource use | Material type, input mass, recycled content %, renewable % |
 | `waste_generation` | E5 | Waste by type and disposal | Waste code (EWC), hazardous flag, disposal method (R/D code), tonnage |
 
-### 3.9 NEW: Double Materiality Schema (Migration 8)
+### 3.9 Double Materiality Schema (Migration 8)
 
 | Table | Purpose | Key Columns |
 |---|---|---|
@@ -405,15 +398,14 @@ apps/api/
 | `materiality_iro` | Impact, Risk, Opportunity register | `assessment_id`, IRO type (impact/risk/opportunity), topic, subtopic, severity scale, likelihood scale, financial materiality score, impact materiality score, double materiality score, stakeholder input |
 | `stakeholder_engagement` | Stakeholder input records | Stakeholder group, engagement method, date, key findings, datapoint references |
 
-### 3.10 NEW: EU Taxonomy Schema (Migration 9)
+### 3.10 EU Taxonomy Schema (Migration 9)
 
 | Table | Purpose | Key Columns |
 |---|---|---|
 | `taxonomy_assessments` | Alignment per period | `organization_id`, `reporting_period_id`, `status` |
 | `taxonomy_activities` | Economic activities assessed | NACE code, activity description, substantial contribution criteria met, DNSH criteria met, minimum safeguards, turnover %, CapEx %, OpEx % |
-| `taxonomy_eligibility` | Eligibility screening | Activity, eligible Y/N, aligned Y/N, rationale |
 
-### 3.11 NEW: ESRS 2 General Disclosures (Migration 10)
+### 3.11 ESRS 2 General Disclosures (Migration 10)
 
 ESRS 2 is the mandatory baseline for all CSRD reporters. It covers governance, strategy, and IRO management. For SMEs, these are simplified narrative tables.
 
@@ -427,7 +419,7 @@ ESRS 2 is the mandatory baseline for all CSRD reporters. It covers governance, s
 | `policy_documents` | ESRS 2 MDR-P | ESG policy registry | Policy title, ESRS reference, approval date, version, document URL, scope, review date |
 | `narrative_disclosures` | All ESRS | Generic qualitative narrative by ESRS datapoint | `organization_id`, `reporting_period_id`, `esrs_datapoint_ref`, `narrative_text`, `disclosure_type` (policy/action/target/outcome) |
 
-### 3.12 NEW: ESRS Datapoint Taxonomy Reference (Migration 11)
+### 3.12 ESRS Datapoint Taxonomy Reference (Migration 11)
 
 A lookup table that maps every ESRS datapoint to its data type, unit, mandatory mode, and availability. Only the datapoints relevant to SMEs are pre-seeded — filters out complexity irrelevant to <250 employee companies.
 
@@ -435,7 +427,7 @@ A lookup table that maps every ESRS datapoint to its data type, unit, mandatory 
 |---|---|---|
 | `esrs_datapoints` | Central datapoint reference | `datapoint_id` (e.g. "E1-6_01"), `esrs_standard`, `paragraph_ref`, `topic`, `data_type` (numeric/boolean/narrative), `unit`, `mandatory_for` (vsme_lite/vsme_full/csrd_full), `is_active`, `version` |
 
-### 3.13 NEW: Assurance & Change Tracking (Migration 12)
+### 3.13 Assurance & Change Tracking (Migration 12)
 
 Simplified audit trail — no complex multi-stage approval workflows. Designed for proportionate SME assurance readiness.
 
@@ -533,9 +525,10 @@ type EsgFeatureFlags = {
 
 ### 4.3 Plan Gating Logic (Updated for SME Modes)
 
-- **Basic plan** → **VSME-Lite**: Climate (E1, basic) + Workforce (S1, basic) + Governance (G1, basic) + Simplified Materiality + Report Builder → free
-- **Comprehensive plan** → **VSME-Full** or **CSRD-Full**: All E (E1–E5) + All S (S1–S4) + All G (G1) + EU Taxonomy (CSRD-Full only) → €99/mo with 30-day trial
-- **Mode auto-detection**: Onboarding detects SME type (micro, small, medium, listed, subsidiary) and compliance drivers to assign the correct mode and provision feature flags accordingly
+- **`vsme_lite`** → **VSME-Lite (Free)**: Climate (E1), Workforce (S1, basic), Governance (G1, basic), Simplified Materiality, Report Builder, ESRS 2 General Disclosures. Core feature flags: `climate_enabled`, `esrs2_enabled`, `materiality_enabled`, `report_builder_enabled` — all `true`
+- **`vsme_full`** → **VSME-Full (€99/mo)**: All Environmental (E1–E5) + All Social (S1–S4) + All Governance (G1) + Simplified Taxonomy. Feature flags for all E/S/G modules enabled
+- **`csrd_full`** → **CSRD-Full (€99/mo)**: All VSME-Full features + Full Double Materiality + Full EU Taxonomy + Expanded ESRS 2 narrative. `taxonomy_enabled = true`, all other module flags enabled
+- **Mode auto-detection**: Onboarding detects SME type (micro, small, medium, listed, subsidiary) and compliance drivers to assign the correct mode and provision feature flags accordingly. The `plan_type` enum stores `'vsme_lite' | 'vsme_full' | 'csrd_full'` in `feature_flag_subscriptions`
 
 ---
 
@@ -546,37 +539,41 @@ type EsgFeatureFlags = {
 - Monorepo workspace setup with `apps/web` and `apps/api`
 - Frontend build + lint pass
 - Auth flow: signup → email confirmation → onboarding → dashboard
-- Route protection via middleware
-- Dashboard overview with KPI cards (carbon-focused — needs ESG expansion)
+- Route protection via proxy.ts
+- Dashboard sidebar with full ESG pillar navigation (7 groups, 21 links)
+- Dashboard overview with ESG pillar progress cards + carbon KPIs
 - Activity data entry (energy/fuel — covers E1 Scope 1&2 basics)
 - Carbon calculation engine (Scope 1 + Scope 2 location-based — ESRS E1-6)
 - Calculation results page with breakdown
 - Emissions page saves `calculation_runs` to Supabase
 - Database schema for carbon (E1 core) with RLS
-- Pre-seeded EU27 emission factors
+- Pre-seeded EU27 emission factors (ADEME, MITECO, Climatiq, EEA)
 - Branding throughout (CarbonTrackAI logos)
 - Onboarding flow creates org + roles + feature flags
 - Extended modules schema (Scope 3, targets, risk, supply chain) — re-mappable to ESRS
+- **Full ESG database schema** — 76 tables across all ESRS pillars (E1–E5, S1–S4, G1, ESRS 2, Materiality, Taxonomy, Assurance)
+- **ESRS datapoint taxonomy** — 27 datapoints seeded
+- **Plan type updated** — `vsme_lite` / `vsme_full` / `csrd_full` with 14 ESG feature flag columns
+- **Marketing homepage** — rebranded to full ESG messaging with 13 ESRS modules
+- **18 placeholder pages** — all ESG module routes created with "Coming soon" infrastructure
 
 ### 🟡 Partial / Needs Adaptation (Blocking VSME-Full & CSRD-Full)
 
-- **VSME focus → ESRS focus**: The original 5 VSME modules need re-mapping to ESRS topical standards. Carbon module (E1) maps cleanly; the rest need recategorisation.
-- **`lib/calculations.ts`** — carbon-only; needs sibling modules for social, governance, materiality, taxonomy
-- **`DashboardNav.tsx`** — lists only carbon-related pages; needs ESG pillar sections
-- **`DashboardPage`** — KPI cards only show carbon metrics; needs ESG composite indicator cards
-- **Marketing pages** (`Hero`, `Modules`, `WhyChoose`, `CTA`) — carbon-focused messaging; needs ESG language
-- **Onboarding** — captures sector and plan; needs ESG scope selection (which pillars/modules)
-- **`feature_flag_subscriptions`** — has 5 VSME flags; needs to be extended to ESRS module flags
+- **UIs for ESG modules** — 61 new tables exist (Social S1–S4, Governance G1, Environmental E2–E5, Materiality, Taxonomy, ESRS 2, Assurance), but data entry forms and dashboards are still placeholder pages
+- **`lib/calculations.ts`** — carbon-only; needs sibling modules for social, governance, materiality, taxonomy computation
+- **DashboardPage** — KPI cards now show ESG pillar overviews, but real composite scoring is not yet implemented
+- **Marketing pages** — rebranded to ESG messaging (done), but need ongoing refinement
+- **Onboarding** — captures sector and plan; needs ESG scope selection and mode auto-detection
 
 ### ❌ Gaps / Not Yet Implemented (Required for CSRD-Full, Optional for VSME-Full)
 
-- **Social data collection (S1–S4)** — no tables, no forms, no calculations
-- **Governance data collection (G1)** — no tables, no forms, no calculations
-- **Environmental extended (E2–E5)** — no tables, no forms
-- **Double materiality assessment** — no UI, no logic, no database tables
-- **EU Taxonomy alignment** — no UI, no logic, no database tables
+- **Social data entry forms (S1–S4)** — database tables exist (18 tables), but no UIs, no metric computation
+- **Governance data entry forms (G1)** — database tables exist (7 tables), but no UIs, no metric computation
+- **Environmental extended forms (E2–E5)** — database tables exist (6 tables), but no UIs
+- **Double materiality assessment UI** — database tables exist (3 tables), but no wizard, no logic
+- **EU Taxonomy alignment UI** — database tables exist (2 tables), but no assessment engine
 - **ESG composite scoring / benchmarking** — no `lib/esg-scoring.ts`
-- **CSRD report builder** — no report engine (Excel/PDF/XHTML)
+- **CSRD report builder** — placeholder page exists; no report engine (Excel/PDF/XHTML)
 - **Scope 2 market-based** — not implemented
 - **Factor refresh jobs** — no Climatiq/national API adapters
 - **CI pipeline** — no tests
@@ -980,14 +977,14 @@ npm run db:migrate -w @carbontrackai/api
 ## 11. Known Issues & Gotchas
 
 - **RLS on insert was missing initially** — migration `20260411000400` fixed this for `user_roles` and `feature_flag_subscriptions`. Any new ESG table must have INSERT policies or onboarding/data entry will fail.
-- **Both `middleware.ts` and `proxy.ts` exist** — identical logic. Consolidate to one to avoid confusion.
-- **No shared types package yet** — types in `lib/calculations.ts` are duplicated across components. Create `@carbontrackai/shared` workspace when adding ESG modules.
-- **Dashboard nav has dead links** — `/dashboard/reports` and `/dashboard/settings` return 404. These should be implemented for CSRD report generation.
+- **No shared types package yet** — types in `lib/calculations.ts` are duplicated across components. Create `@carbontrackai/shared` workspace when building ESG module UIs.
+- **ESG module UIs are placeholder pages only** — all 18 ESG module routes exist (environmental, social, governance, general disclosures, materiality, taxonomy, reports, settings) but data entry forms, calculations, and dashboards need to be built.
 - **Emissions page is 428 lines** — too large. Refactor into smaller components (calculation runner, results table, factor provenance panel).
 - **VSME→ESRS remapping needed** — the original 5 VSME modules don't map 1:1 to ESRS topical standards. Use the mapping tables in section 4 to guide refactoring.
-- **ESRS 2 narrative UI not yet built** — all ESRS 2 tables exist in schema (Migration 10) but the narrative disclosure pages and forms are not yet implemented.
-- **Datapoint taxonomy seeded only at module level** — the `esrs_datapoints` table (Migration 11) exists with high-level module references. Granular datapoint seeding per pillar is needed as modules are built out.
+- **ESRS 2 narrative UI not yet built** — all 7 ESRS 2 tables exist in schema (Migration 10) but the narrative disclosure pages and forms are not yet implemented.
+- **Datapoint taxonomy seeded only at module level** — the `esrs_datapoints` table (Migration 11) exists with 27 high-level module references. Granular datapoint seeding per pillar is needed as modules are built out.
 - **Social & governance benchmarks vary by country** — unlike emission factors, social metrics (e.g. average training hours, gender pay gap) need country-specific benchmarks. Plan for a `social_benchmarks` and `governance_benchmarks` table.
+- **Feature flag gating not yet enforced** — `feature_flag_subscriptions` has 14 ESG module flags and the updated `plan_type` enum (`vsme_lite`/`vsme_full`/`csrd_full`), but the sidebar and dashboard don't dynamically hide modules based on the SME's plan.
 
 ---
 
