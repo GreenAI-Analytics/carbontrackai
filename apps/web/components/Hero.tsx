@@ -6,7 +6,7 @@ export function Hero() {
           ESG Reporting Made Simple
         </h1>
         <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-          CSRD/ESRS-compliant platform for EU SMEs (&lt;250 employees). Measure environmental impact, track social metrics, report on governance — all in one place.
+          The all-in-one CSRD & ESRS compliance platform for European SMEs. Measure environmental impact, track social metrics, and report on governance — without the complexity.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">

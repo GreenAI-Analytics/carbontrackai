@@ -17,7 +17,7 @@ export function Footer() {
               />
             </div>
             <p className="text-sm">
-              CSRD/ESRS-compliant ESG reporting for EU SMEs. One platform for Environmental, Social, and Governance disclosures.
+              One platform for Environmental, Social, and Governance disclosures — built for CSRD and ESRS compliance.
             </p>
             <div className="mt-4">
               <p className="text-xs uppercase tracking-wide text-gray-400">Built by</p>
@@ -43,7 +43,7 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4">Platform</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#esrs-modules" className="hover:text-primary-400">
+                <a href="#features" className="hover:text-primary-400">
                   ESRS Modules
                 </a>
               </li>
@@ -110,7 +110,7 @@ export function Footer() {
 
         <div className="border-t border-gray-700 pt-8 text-center text-sm">
           <p>
-            &copy; 2026 CarbonTrackAI. Made with 💚 for European SMEs.
+            &copy; 2026 CarbonTrackAI. Built for European SMEs.
           </p>
         </div>
       </div>

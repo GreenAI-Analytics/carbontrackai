@@ -15,7 +15,7 @@ const reasons = [
     icon: "🎯",
     title: "VSME-First Design",
     description:
-      "Proportionate for EU SMEs (< 250 employees). Three modes — VSME-Lite, VSME-Full, CSRD-Full — so you only see what's relevant to your compliance obligations.",
+      "Proportionate platform with three modes — VSME-Lite, VSME-Full, and CSRD-Full — so you only see what is relevant to your compliance obligations.",
   },
   {
     icon: "🔐",
