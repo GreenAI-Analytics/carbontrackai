@@ -3,39 +3,103 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV = [
-  { label: "Overview", href: "/dashboard", icon: "🏠", exact: true },
-  { label: "Activity Data", href: "/dashboard/activity", icon: "⚡", exact: false },
-  { label: "Emissions", href: "/dashboard/emissions", icon: "📊", exact: false },
-  { label: "Reports", href: "/dashboard/reports", icon: "📄", exact: false },
-  { label: "Settings", href: "/dashboard/settings", icon: "⚙️", exact: false },
+type NavGroup = {
+  label: string;
+  items: Array<{
+    label: string;
+    href: string;
+    exact?: boolean;
+  }>;
+};
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [{ label: "Dashboard", href: "/dashboard", exact: true }],
+  },
+  {
+    label: "General Disclosures",
+    items: [
+      { label: "Governance & Strategy", href: "/dashboard/esg/general/governance" },
+      { label: "IRO Management", href: "/dashboard/esg/general/iro-management" },
+    ],
+  },
+  {
+    label: "Environmental",
+    items: [
+      { label: "Energy & Emissions", href: "/dashboard/esg/environmental/climate" },
+      { label: "Activity Data", href: "/dashboard/activity" },
+      { label: "Emissions Results", href: "/dashboard/emissions" },
+      { label: "Pollution", href: "/dashboard/esg/environmental/pollution" },
+      { label: "Water & Marine", href: "/dashboard/esg/environmental/water" },
+      { label: "Biodiversity", href: "/dashboard/esg/environmental/biodiversity" },
+      { label: "Circular Economy", href: "/dashboard/esg/environmental/circular" },
+    ],
+  },
+  {
+    label: "Social",
+    items: [
+      { label: "Own Workforce", href: "/dashboard/esg/social/workforce" },
+      { label: "Value Chain", href: "/dashboard/esg/social/valuechain" },
+      { label: "Communities", href: "/dashboard/esg/social/communities" },
+      { label: "Consumers", href: "/dashboard/esg/social/consumers" },
+    ],
+  },
+  {
+    label: "Governance",
+    items: [
+      { label: "Business Ethics", href: "/dashboard/esg/governance/ethics" },
+      { label: "Compliance", href: "/dashboard/esg/governance/compliance" },
+      { label: "Data Privacy", href: "/dashboard/esg/governance/dataprivacy" },
+    ],
+  },
+  {
+    label: "Cross-Cutting",
+    items: [
+      { label: "Double Materiality", href: "/dashboard/materiality" },
+      { label: "EU Taxonomy", href: "/dashboard/taxonomy" },
+      { label: "Report Builder", href: "/dashboard/reports" },
+    ],
+  },
+  {
+    label: "Platform",
+    items: [{ label: "Settings", href: "/dashboard/settings" }],
+  },
 ];
 
 export default function DashboardNav() {
   const pathname = usePathname();
 
-  return (
-    <nav className="space-y-1">
-      {NAV.map((item) => {
-        const isActive = item.exact
-          ? pathname === item.href
-          : pathname.startsWith(item.href);
+  function isActive(href: string, exact?: boolean): boolean {
+    if (exact) return pathname === href;
+    return pathname.startsWith(href);
+  }
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-              isActive
-                ? "bg-primary-50 text-primary-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <span>{item.icon}</span>
-            {item.label}
-          </Link>
-        );
-      })}
+  return (
+    <nav className="space-y-6">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label}>
+          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
+            {group.label}
+          </p>
+          <ul className="space-y-0.5">
+            {group.items.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`block rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    isActive(item.href, item.exact)
+                      ? "bg-primary-50 text-primary-700"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }
