@@ -64,15 +64,15 @@ export default function SignupPage() {
             <Image
               src="/img/carbontrack-ai-logo.png"
               alt="CarbonTrackAI logo"
-              width={128}
-              height={32}
-              className="h-8 w-auto"
+              width={192}
+              height={48}
+              className="h-12 w-auto"
               style={{ width: "auto" }}
               priority
             />
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Create your account</h1>
-          <p className="mt-2 text-gray-600">Free for Scope 1 &amp; 2 reporting. No credit card needed.</p>
+          <p className="mt-2 text-gray-600">Free Climate, Double Materiality, and Report Builder modules. No credit card needed.</p>
         </div>
 
         {message ? (

@@ -40,9 +40,9 @@ export default function ForgotPasswordPage() {
           <Image
             src="/img/carbontrack-ai-logo.png"
             alt="CarbonTrackAI logo"
-            width={128}
-            height={32}
-            className="h-8 w-auto"
+            width={192}
+            height={48}
+            className="h-12 w-auto"
             style={{ width: "auto" }}
             priority
           />
