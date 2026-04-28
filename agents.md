@@ -277,6 +277,12 @@ The sidebar hides modules not applicable to the SME's scope.
 ### 3.2 File Map
 
 ```
+apps/web/
+└── lib/
+    └── materiality.ts                            # Double materiality scoring engine + ESRS topic definitions
+```
+
+```
 apps/api/
 ├── scripts/
 │   ├── seed-demo-user.js                            # Creates demo user + org + role + flags
@@ -297,13 +303,17 @@ apps/api/
 │   │   ├── 20260411001100_esrs_datapoint_taxonomy.sql          # Datapoint reference — 27 seeds
 │   │   ├── 20260411001200_assurance_change_tracking.sql        # Change history & evidence — 3 tables
 │   │   ├── 20260411001300_update_plan_type_and_feature_flags.sql # Plan type enum + ESG flags
-│   │   └── 20260411001400_fix_user_roles_rls_recursion.sql     # Fix infinite RLS recursion on user_roles
+│   │   ├── 20260411001400_fix_user_roles_rls_recursion.sql     # Fix infinite RLS recursion on user_roles
+│   │   └── 20260411001500_add_materiality_rls_policies.sql     # INSERT/UPDATE/DELETE policies for materiality tables
 │   ├── .temp/                                         # Supabase local runtime
 │   └── config.toml                                    # Supabase local config
 ├── .gitignore
 ├── BACKEND_SETUP.md
 ├── README.md
 ├── package.json
+├── scripts/
+│   ├── seed-demo-user.js                            # Creates demo user + org + role + flags
+│   └── seed-demo-data.js                            # Seeds activity records + calculations
 └── supabase.json
 ```
 
@@ -566,6 +576,9 @@ type EsgFeatureFlags = {
 - **Login redirect** — after sign-in, redirects to `/dashboard` instead of homepage
 - **Cookie-based sessions** — browser client uses `createBrowserClient` from `@supabase/ssr` so proxy middleware can detect logged-in users
 - **Tailwind v4 theme** — `primary` color palette defined in `globals.css` via `@theme` (v4 ignores `tailwind.config.ts`)
+- **Double Materiality assessment UI** — full IRO Register with CRUD, materiality matrix visualization, and assessment summary with topic-level materiality classification
+- **Materiality library** — `lib/materiality.ts` with ESRS topic registry (10 topics, 32 subtopics), scoring engine (impact, financial, double), matrix builder, and summary generator
+- **Materiality RLS policies** — migration 15 adds INSERT/UPDATE/DELETE policies for all 3 materiality tables
 
 ### 🟡 Partial / Needs Adaptation (Blocking VSME-Full & CSRD-Full)
 
@@ -1017,6 +1030,8 @@ The script creates:
 
 The script is idempotent — it skips records that already exist.
 
+
+
 ### Adding a New ESG Module
 
 1. **Database**: Create new migration in `apps/api/supabase/migrations/` with tables + RLS + indexes
@@ -1026,6 +1041,59 @@ The script is idempotent — it skips records that already exist.
 5. **Dashboard**: Add KPI card to dashboard overview
 6. **Feature flag**: Add boolean to `feature_flag_subscriptions` schema and onboarding flow
 7. **Export**: Add ESRS datapoint mapping to report builder
+
+---
+
+## Double Materiality Module
+
+A full double materiality assessment UI has been built, replacing the placeholder page.
+
+### Pages
+
+| Route | Purpose |
+|---|---|
+| `/dashboard/materiality` | Assessment list — create new or pick existing assessment |
+| `/dashboard/materiality/[id]` | Assessment detail with 3 tabs (IRO Register, Matrix, Summary) |
+
+### IRO Register (Tab 1)
+
+- Full CRUD table for Impacts, Risks, and Opportunities
+- Modal form with IRO type selector, direction, ESRS topic/subtopic pickers, severity/likelihood sliders (1–5)
+- Real-time score computation as sliders change
+- Score columns: Impact Materiality, Financial Materiality, Double Materiality
+
+### Materiality Matrix (Tab 2)
+
+- SVG-based 2×2 matrix plotting IROs by impact score (x-axis) vs financial score (y-axis)
+- Color-coded quadrants: Not Material, Impact, Financial, Double Material
+- IROs rendered as circles sized by double materiality score, colored by type (impact=red, risk=amber, opportunity=green)
+- Data table below with quadrant classification badges
+
+### Summary (Tab 3)
+
+- Key metric cards: Total IROs, Material Topics, Highly Material Topics, Assessment Progress %
+- Per-topic materiality table showing all 10 ESRS topics with IRO count and materiality badge
+- Next steps section with guidance based on material topics identified
+
+### Library: `lib/materiality.ts`
+
+| Export | Purpose |
+|---|---|
+| `ESRS_TOPICS` | Registry of all 10 ESRS topics (E1–E5, S1–S4, G1) with 32 subtopics |
+| `calculateImpactScore(severity, likelihood)` | Impact materiality score using √(severity × likelihood) |
+| `calculateFinancialScore(magnitude, likelihood)` | Financial materiality score using √(magnitude × likelihood) |
+| `calculateDoubleMaterialityScore(impact, financial)` | Max of impact and financial scores |
+| `classifyMateriality(score)` | Threshold-based classification (<2.5 not material, <4.0 material, ≥4.0 highly material) |
+| `computeIroScores(iro)` | Computes all three scores from an IRO record in one call |
+| `buildMatrixData(iros)` | Generates matrix points with quadrant assignment |
+| `generateSummary(assessmentId, status, iros)` | Full assessment summary with material topic detection |
+
+### Database
+
+Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
+- `materiality_assessments`
+- `materiality_iro` (via assessment → org join)
+- `stakeholder_engagement`
 
 ---
 
@@ -1042,7 +1110,9 @@ The script is idempotent — it skips records that already exist.
 - **Feature flag gating not yet enforced** — `feature_flag_subscriptions` has 14 ESG module flags and the updated `plan_type` enum (`vsme_lite`/`vsme_full`/`csrd_full`), but the sidebar and dashboard don't dynamically hide modules based on the SME's plan.
 - **Database connection via pooler** — direct DNS (`db.<ref>.supabase.co`) fails on some networks (IPv6-only). Use the pooler at `aws-0-eu-west-1.pooler.supabase.com:6543` instead. See conversation context for credentials.
 - **pgBouncer transaction mode** — multi-statement SQL blocks can fail. Prefer individual statements or scripts when applying migrations manually.
-- **Migration 14 must be applied manually via SQL Editor** — it cannot be pushed via `supabase db push` due to the pooler connection issue. Run the SQL from `apps/api/supabase/migrations/20260411001400_fix_user_roles_rls_recursion.sql` in the Supabase Dashboard SQL Editor.
+- **Migrations 14 & 15 must be applied manually via SQL Editor** — they cannot be pushed via `supabase db push` due to the pooler connection issue. Run the SQL from the migration files in the Supabase Dashboard SQL Editor.
+- **Materiality page has no stakeholder engagement tab yet** — the `stakeholder_engagement` table exists with RLS, but the UI only has IRO Register, Matrix, and Summary tabs. A future step should add stakeholder engagement logging.
+- **Stakeholder engagement table not yet connected to the UI** — `stakeholder_engagement` table has RLS policies (migration 15) but no data entry forms exist.
 
 ### ✅ Resolved Issues
 
@@ -1050,6 +1120,8 @@ The script is idempotent — it skips records that already exist.
 - **Login redirects to homepage** — fixed login page to redirect to `/dashboard` instead of `/`.
 - **Session cookies not synced with proxy middleware** — fixed browser Supabase client to use `createBrowserClient` from `@supabase/ssr` (was using plain `createClient` which only stored sessions in localStorage).
 - **Tailwind v4 custom colors not resolving** — fixed by moving `primary` color palette from `tailwind.config.ts` (ignored by v4) into `globals.css` via `@theme` directive.
+- **Missing INSERT/UPDATE/DELETE RLS on materiality tables** — fixed in migration 15. The original migration 8 only created SELECT policies, preventing users from adding IROs through the API.
+- **Double Materiality placeholder page** — replaced the "Coming soon" placeholder with a full working UI: assessment list, IRO Register CRUD, materiality matrix visualization, and summary with topic-level classification.
 
 ---
 
