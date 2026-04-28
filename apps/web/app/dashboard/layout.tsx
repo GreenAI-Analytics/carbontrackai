@@ -17,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               height={48}
               className="h-12 w-auto"
               style={{ width: "auto" }}
+              loading="eager"
             />
           </Link>
           <SignOutButton />

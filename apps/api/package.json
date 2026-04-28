@@ -9,6 +9,8 @@
     "db:migrate": "supabase migration new",
     "db:push": "supabase db push",
     "db:pull": "supabase db pull",
+    "seed:demo-user": "node scripts/seed-demo-user.js",
+    "seed:demo-data": "node scripts/seed-demo-data.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

@@ -13,6 +13,8 @@
   "scripts": {
     "dev": "npm run dev -w @carbontrackai/api",
     "dev:all": "npm run dev -w @carbontrackai/api -w @carbontrackai/web",
+    "seed:demo-user": "node apps/api/scripts/seed-demo-user.js",
+    "seed:demo-data": "node apps/api/scripts/seed-demo-data.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

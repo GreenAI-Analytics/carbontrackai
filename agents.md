@@ -278,6 +278,9 @@ The sidebar hides modules not applicable to the SME's scope.
 
 ```
 apps/api/
+├── scripts/
+│   ├── seed-demo-user.js                            # Creates demo user + org + role + flags
+│   └── seed-demo-data.js                            # Seeds activity records + calculations
 ├── supabase/
 │   ├── migrations/
 │   │   ├── 20260411000000_init_schema.sql            # Core ESG tables + RLS
@@ -293,9 +296,10 @@ apps/api/
 │   │   ├── 20260411001000_esrs2_general_disclosures.sql        # ESRS 2 narrative — 7 tables
 │   │   ├── 20260411001100_esrs_datapoint_taxonomy.sql          # Datapoint reference — 27 seeds
 │   │   ├── 20260411001200_assurance_change_tracking.sql        # Change history & evidence — 3 tables
-│   │   └── 20260411001300_update_plan_type_and_feature_flags.sql # Plan type enum + ESG flags
+│   │   ├── 20260411001300_update_plan_type_and_feature_flags.sql # Plan type enum + ESG flags
+│   │   └── 20260411001400_fix_user_roles_rls_recursion.sql     # Fix infinite RLS recursion on user_roles
 │   ├── .temp/                                         # Supabase local runtime
-│   └── config.toml
+│   └── config.toml                                    # Supabase local config
 ├── .gitignore
 ├── BACKEND_SETUP.md
 ├── README.md
@@ -556,6 +560,12 @@ type EsgFeatureFlags = {
 - **Plan type updated** — `vsme_lite` / `vsme_full` / `csrd_full` with 14 ESG feature flag columns
 - **Marketing homepage** — rebranded to full ESG messaging with 13 ESRS modules
 - **18 placeholder pages** — all ESG module routes created with "Coming soon" infrastructure
+- **Demo user seed script** — `apps/api/scripts/seed-demo-user.js` creates `demo@carbontrackai.com` with org, admin role, and `csrd_full` plan
+- **Demo data seed script** — `apps/api/scripts/seed-demo-data.js` creates 36 activity records (electricity, gas, diesel) + Scope 1&2 calculations for dashboard KPIs
+- **RLS recursion fix** — migration 14 replaces recursive `user_roles` policy with `SECURITY DEFINER` helper functions
+- **Login redirect** — after sign-in, redirects to `/dashboard` instead of homepage
+- **Cookie-based sessions** — browser client uses `createBrowserClient` from `@supabase/ssr` so proxy middleware can detect logged-in users
+- **Tailwind v4 theme** — `primary` color palette defined in `globals.css` via `@theme` (v4 ignores `tailwind.config.ts`)
 
 ### 🟡 Partial / Needs Adaptation (Blocking VSME-Full & CSRD-Full)
 
@@ -962,6 +972,51 @@ npm run db:push -w @carbontrackai/api
 npm run db:migrate -w @carbontrackai/api
 ```
 
+### Seeding a Demo User
+
+A seed script is available to quickly create a test user with a pre-provisioned organization, admin role, and full feature flags:
+
+```bash
+# From repo root — creates demo@carbontrackai.com / Demo1234!
+npm run seed:demo-user
+
+# Or from the api workspace
+npm run seed:demo-user -w @carbontrackai/api
+```
+
+The script creates:
+- A confirmed user in `auth.users` via the Supabase Admin API (service_role key)
+- A row in `user_profiles` (via the `on_auth_user_created` trigger)
+- An organization named "Demo Company Ltd." (DE, IT & Software, base year 2024)
+- Admin role with `is_primary = true` in `user_roles`
+- Feature flags with `csrd_full` plan in `feature_flag_subscriptions`
+
+After running, log in at `http://localhost:3000/login` with:
+- **Email**: `demo@carbontrackai.com`
+- **Password**: `Demo1234!`
+
+> **Note**: The script reads `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from the root `.env.local`. These must be configured before running.
+
+### Seeding Demo Data
+
+After the demo user exists, populate the dashboard with sample activity data and calculations:
+
+```bash
+# From repo root
+npm run seed:demo-data
+
+# Or from the api workspace
+npm run seed:demo-data -w @carbontrackai/api
+```
+
+The script creates:
+- A 2025 reporting period
+- **36 activity records** (12 months × electricity, natural gas, diesel car fuel) for a typical German SME office
+- **Scope 1 calculation run** — 23.86 tCO₂e (gas heating + fleet fuel)
+- **Scope 2 calculation run** — 16.83 tCO₂e (German grid electricity, 49.5 MWh)
+
+The script is idempotent — it skips records that already exist.
+
 ### Adding a New ESG Module
 
 1. **Database**: Create new migration in `apps/api/supabase/migrations/` with tables + RLS + indexes
@@ -985,6 +1040,16 @@ npm run db:migrate -w @carbontrackai/api
 - **Datapoint taxonomy seeded only at module level** — the `esrs_datapoints` table (Migration 11) exists with 27 high-level module references. Granular datapoint seeding per pillar is needed as modules are built out.
 - **Social & governance benchmarks vary by country** — unlike emission factors, social metrics (e.g. average training hours, gender pay gap) need country-specific benchmarks. Plan for a `social_benchmarks` and `governance_benchmarks` table.
 - **Feature flag gating not yet enforced** — `feature_flag_subscriptions` has 14 ESG module flags and the updated `plan_type` enum (`vsme_lite`/`vsme_full`/`csrd_full`), but the sidebar and dashboard don't dynamically hide modules based on the SME's plan.
+- **Database connection via pooler** — direct DNS (`db.<ref>.supabase.co`) fails on some networks (IPv6-only). Use the pooler at `aws-0-eu-west-1.pooler.supabase.com:6543` instead. See conversation context for credentials.
+- **pgBouncer transaction mode** — multi-statement SQL blocks can fail. Prefer individual statements or scripts when applying migrations manually.
+- **Migration 14 must be applied manually via SQL Editor** — it cannot be pushed via `supabase db push` due to the pooler connection issue. Run the SQL from `apps/api/supabase/migrations/20260411001400_fix_user_roles_rls_recursion.sql` in the Supabase Dashboard SQL Editor.
+
+### ✅ Resolved Issues
+
+- **RLS infinite recursion on `user_roles`** — fixed in migration 14. The original policy had `SELECT ... FROM public.user_roles` inside the `user_roles` SELECT policy, causing infinite recursion. Replaced with `SECURITY DEFINER` helper functions that bypass RLS.
+- **Login redirects to homepage** — fixed login page to redirect to `/dashboard` instead of `/`.
+- **Session cookies not synced with proxy middleware** — fixed browser Supabase client to use `createBrowserClient` from `@supabase/ssr` (was using plain `createClient` which only stored sessions in localStorage).
+- **Tailwind v4 custom colors not resolving** — fixed by moving `primary` color palette from `tailwind.config.ts` (ignored by v4) into `globals.css` via `@theme` directive.
 
 ---
 
