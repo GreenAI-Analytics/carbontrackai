@@ -9,7 +9,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Name** | CarbonTrackAI |
-| **Description** | ESG reporting for EU SMEs (< 250 employees) — VSME-first with CSRD/ESRS alignment for listed SMEs. Three proportionate modes: VSME-Lite, VSME-Full, CSRD-Full. |
+| **Description** | ESG reporting for EU SMEs per Recommendation 2003/361/EC (micro <10 + ≤€2M turnover/balance, small <50 + ≤€10M, medium <250 + ≤€50M turnover/≤€43M balance) — VSME-first with CSRD/ESRS alignment for in-scope listed SMEs. Three proportionate modes: VSME-Lite, VSME-Full, CSRD-Full. |
 | **Repository** | `https://github.com/GreenAI-Analytics/carbontrackai` |
 | **Stack** | Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 (frontend), Supabase PostgreSQL (backend/database) |
 | **Package Manager** | npm (workspaces monorepo) |
@@ -21,27 +21,34 @@ The platform adapts dynamically to SME size and regulatory scope, supporting thr
 
 ### SME Scoping Logic
 
-| SME Type | Criteria | CSRD Mandatory? | Platform Mode |
-|---|---|---|---|
-| **Micro** | <10 employees, ≤ €700k turnover | ❌ No | **VSME-Lite** |
-| **Small** | <50 employees, ≤ €10M turnover | ❌ No (unless listed) | **VSME-Lite / VSME-Full** |
-| **Medium** | <250 employees, ≤ €50M turnover | ❌ No (unless listed) | **VSME-Full / CSRD-Full** |
-| **Listed SMEs** | Listed on regulated market | ✅ Yes | **CSRD-Full** |
-| **Subsidiaries of large groups** | Required by parent | ⚠ Possibly | **CSRD-Full** |
+> **Legal basis**: SME classification follows **Commission Recommendation 2003/361/EC** (OJ L 124, 20.5.2003). An enterprise qualifies as an SME if it meets the **staff headcount** threshold **AND** at least **one** of the two financial thresholds (**turnover OR balance sheet**). This is distinct from the **Accounting Directive (2013/34/EU)** which uses lower thresholds for simplified *financial reporting* purposes only and must not be used for SME classification.
+
+| SME Type | Staff Headcount | Turnover (annual) | OR Balance Sheet | CSRD Mandatory? | Platform Mode |
+|---|---|---|---|---|---|
+| **Micro** | < 10 | ≤ €2M | ≤ €2M | ❌ No | **VSME-Lite** |
+| **Small** | < 50 | ≤ €10M | ≤ €10M | ❌ No (unless listed) | **VSME-Lite / VSME-Full** |
+| **Medium** | < 250 | ≤ €50M | ≤ €43M | ❌ No (unless listed) | **VSME-Full / CSRD-Full** |
+| **Listed SMEs** | Listed on regulated market | — | — | ⚠ Omnibus-dependent | **VSME-Full / CSRD-Full** |
+| **Subsidiaries of large groups** | Required by parent | — | — | ⚠ Possibly | **CSRD-Full** |
+
+> **Omnibus I (2025) note**: Under the proposed Omnibus simplification package, the CSRD scope threshold would rise to **>1,000 employees + €50M turnover or €25M balance sheet**. If adopted as proposed, the vast majority of listed SMEs will fall *out* of mandatory CSRD and into the voluntary VSME regime. The onboarding auto-detection logic accounts for this; listed SMEs are no longer unconditionally routed to CSRD-Full.
+
 
 ### Platform Modes
 
-| Mode | Description |
-|---|---|
-| **VSME-Lite** | Simplified ESG: basic climate, basic workforce, basic governance, simplified materiality. |
-| **VSME-Full** | Full voluntary SME standard: all E/S/G topics, simplified taxonomy. |
-| **CSRD-Full** | Full ESRS E1–E5, S1–S4, G1, double materiality, EU Taxonomy. |
+> **Naming note**: The official EFRAG VSME standard (published Dec 2024) defines two modules: **Basic Module (B1–B11)** and **Comprehensive Module (C1–C9)**. The codebase currently uses the legacy names `VSME-Lite` and `VSME-Full`. A P0 migration to align with the official `vsme_basic` / `vsme_comprehensive` / `csrd` enum is planned — see `features.md` §1.1.
 
-**Target audience**: EU SMEs (< 250 employees, ≤ €50M turnover, or ≤ €43M balance sheet). The platform is **VSME-first** — most SMEs use VSME-Lite or VSME-Full voluntarily. CSRD-Full mode serves listed SMEs and subsidiaries of large groups. The app auto-detects the SME's mode at onboarding and hides irrelevant complexity.
+| Mode | Official EFRAG Equivalent | Description |
+|---|---|---|
+| **VSME-Lite** | VSME Basic Module (B1–B11) | Simplified ESG: basic climate, basic workforce, basic governance, simplified materiality. |
+| **VSME-Full** | VSME Comprehensive Module (C1–C9, additive to Basic) | Full voluntary SME standard: all E/S/G topics, simplified taxonomy. |
+| **CSRD-Full** | Full ESRS Set 1 | Full ESRS E1–E5, S1–S4, G1, double materiality, EU Taxonomy. For the small subset of SMEs still in mandatory CSRD scope post-Omnibus. |
+
+**Target audience**: EU SMEs per Recommendation 2003/361/EC — micro (<10 employees, ≤ €2M turnover or ≤ €2M balance sheet), small (<50 employees, ≤ €10M turnover or ≤ €10M balance sheet), and medium (<250 employees, ≤ €50M turnover or ≤ €43M balance sheet). The platform is **VSME-first** — most SMEs use VSME-Lite or VSME-Full voluntarily. CSRD-Full mode serves the subset of listed SMEs and subsidiaries of large groups that remain in mandatory CSRD scope (subject to Omnibus I changes). The app auto-detects the SME's mode at onboarding and hides irrelevant complexity.
 
 **Design philosophy**: Simplified for SME reality. No over-engineered assurance workflows — instead, audit-grade change history and evidence attachments. Qualitative/narrative disclosures use simple structured forms, not complex CMS tools. The datapoint taxonomy starts at the module level and becomes granular per-pillar as the platform matures.
 
-**Design principle**: The platform prioritises VSME-Lite and VSME-Full as the primary use cases for the majority of non-listed SMEs. CSRD-Full is served as a secondary mode for listed SMEs and subsidiaries of large groups. Where complexity can be reduced without breaking regulatory usefulness, it is reduced.
+**Design principle**: The platform prioritises VSME-Lite and VSME-Full as the primary use cases for the majority of non-listed SMEs. CSRD-Full is served as a secondary mode for the minority of SMEs that remain in mandatory CSRD scope post-Omnibus I (listed SMEs above the revised threshold + subsidiaries of large groups). Where complexity can be reduced without breaking regulatory usefulness, it is reduced. The VSME "value-chain shield" workflow (see `features.md` §1.2) is a core commercial feature — enabling SMEs to push back on disproportionate ESG data requests from large counterparties.
 
 **ESRS Topical Standards covered:**
 
@@ -577,7 +584,7 @@ type EsgFeatureFlags = {
 - **Cookie-based sessions** — browser client uses `createBrowserClient` from `@supabase/ssr` so proxy middleware can detect logged-in users
 - **Tailwind v4 theme** — `primary` color palette defined in `globals.css` via `@theme` (v4 ignores `tailwind.config.ts`)
 - **Double Materiality assessment UI** — full IRO Register with CRUD, materiality matrix visualization, and assessment summary with topic-level materiality classification
-- **Materiality library** — `lib/materiality.ts` with ESRS topic registry (10 topics, 32 subtopics), scoring engine (impact, financial, double), matrix builder, and summary generator
+- **Materiality library** — `lib/materiality.ts` with ESRS topic registry (10 topics, 32 subtopics), **ESRS 1-compliant scoring engine** (scale×scope×irremediability for negative, scale×scope for positive, per-assessment thresholds with rationale, time-horizon and value-chain tagging), matrix builder, and summary generator
 - **Materiality RLS policies** — migration 15 adds INSERT/UPDATE/DELETE policies for all 3 materiality tables
 
 ### 🟡 Partial / Needs Adaptation (Blocking VSME-Full & CSRD-Full)
@@ -592,7 +599,7 @@ type EsgFeatureFlags = {
 
 - **Social data entry forms (S1–S4)** — database tables exist (18 tables), but no UIs, no metric computation
 - **Governance data entry forms (G1)** — database tables exist (7 tables), but no UIs, no metric computation
-- **Environmental extended forms (E2–E5)** — database tables exist (6 tables), but no UIs
+- **Environmental extended forms (E2–E5)** — database tables exist (6 tables), but no UIs (Placeholder pages for Pollution, Water, Biodiversity, Circular Economy)
 - **Double materiality assessment UI** — database tables exist (3 tables), but no wizard, no logic
 - **EU Taxonomy alignment UI** — database tables exist (2 tables), but no assessment engine
 - **ESG composite scoring / benchmarking** — no `lib/esg-scoring.ts`
@@ -610,17 +617,28 @@ type EsgFeatureFlags = {
 
 ### 6.1 User Onboarding Flow (Updated for SME Modes)
 
+> **SME classification** follows Recommendation 2003/361/EC: headcount **AND** (turnover **OR** balance sheet). See §1 SME Scoping Logic for thresholds.
+
 ```
 /signup → supabase.auth.signUp() → email confirmation
-  → /onboarding (Step 1: org details — name, country, sector, size, revenue)
+  → /onboarding (Step 1: org details — name, country, sector, headcount, annual turnover, annual balance sheet total)
+      → SME classification: two-of-three logic applied
+        → Does headcount qualify? (< 250 for any SME category)
+        → Does turnover OR balance sheet qualify?
+        → Assign: micro / small / medium / non-SME
     → /onboarding (Step 2: Compliance Scope Detection)
-        - Are you listed on a regulated market?
-        - Required by parent company?
-        - Customer ESG requests?
-        - Voluntary reporting?
+        - Listed on a regulated market? → If yes + Omnibus scope check (not automatic CSRD)
+        - Required by parent company (subsidiary of large group)?
+        - Receiving ESG data requests from banks/customers/investors?
+        - Voluntary VSME reporting?
+      → Determine: mandatory CSRD vs voluntary VSME vs counterparty-driven VSME
     → /onboarding (Step 3: ESG scope — select E/S/G pillars needed)
-      → /onboarding (Step 4: plan — Basic vs Comprehensive)
-        → Auto-assign mode: VSME-Lite / VSME-Full / CSRD-Full
+      → /onboarding (Step 4: plan — Basic (VSME-Lite) vs Comprehensive (VSME-Full / CSRD-Full))
+        → Auto-assign mode using SME type + compliance driver:
+            - Micro/small non-listed → VSME-Lite (upgradable to VSME-Full)
+            - Medium non-listed → VSME-Full (upgradable to CSRD-Full if counterparty requires)
+            - Listed SMEs (in Omnibus scope) → CSRD-Full
+            - Listed SMEs (outside Omnibus scope) → VSME-Full (upgradable to CSRD-Full)
         → supabase.from("organizations").insert()
         → supabase.from("user_roles").insert()
         → supabase.from("feature_flag_subscriptions").insert()
@@ -925,6 +943,8 @@ POST   /admin/users/:id/approve
 
 ## 8. Environment Variables
 
+> **GDPR data residency**: The Supabase project MUST be pinned to an EU region (**eu-central-1** or **eu-west-1**) to ensure personal data (including ESRS S1 workforce aggregates) remains within the EEA. This is a regulatory requirement under Art. 44–49 GDPR.
+
 | Variable | Used In | Required |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Frontend (`supabase-browser.ts`) | Yes |
@@ -932,6 +952,7 @@ POST   /admin/users/:id/approve
 | `SUPABASE_URL` | Backend (future) | Yes |
 | `SUPABASE_ANON_KEY` | Backend (future) | Yes |
 | `SUPABASE_SERVICE_ROLE_KEY` | Backend admin operations | Production |
+| `SUPABASE_REGION` | Supabase project region (must be `eu-central-1` or `eu-west-1`) | **P0 — GDPR** |
 | `CLIMATIQ_API_KEY` | Factor refresh (future) | When integrating |
 | `ESRS_DATAPOINT_API_URL` | ESRS taxonomy updates | Optional |
 | `SOCIAL_BENCHMARK_DB_URL` | Social metric benchmarking | Optional |

@@ -33,6 +33,12 @@ export type MaterialityStatus = "draft" | "in_progress" | "completed" | "reviewe
 
 export type MaterialityLevel = "not_material" | "material" | "highly_material";
 
+/** ESRS 1 para 43, IRO-1 required: time horizon for each IRO */
+export type TimeHorizon = "short" | "medium" | "long";
+
+/** ESRS 2 SBM-3 required: where in the value chain the IRO occurs */
+export type ValueChainLocation = "upstream" | "own_operations" | "downstream" | "multiple";
+
 export type EsrsPillar = "E" | "S" | "G";
 
 export interface EsrsSubtopic {
@@ -50,6 +56,13 @@ export interface EsrsTopic {
   subtopics: EsrsSubtopic[];
 }
 
+/** Per-assessment materiality threshold configuration (ESRS 1 para 44) */
+export interface MaterialityThresholdConfig {
+  material: number;         // threshold above which a topic is material
+  highly_material: number;  // threshold above which a topic is highly material
+  rationale: string;        // entity must disclose why this threshold was chosen (ESRS 1 para 44)
+}
+
 export interface IroRecord {
   id?: string;
   assessment_id: string;
@@ -59,11 +72,32 @@ export interface IroRecord {
   subtopic?: string;
   title: string;
   description?: string;
-  severity_scale?: number;        // 1–5
-  likelihood_scale?: number;      // 1–5
+  // ── Legacy fields (deprecated; kept for backward compat) ──
+  severity_scale?: number;        // @deprecated — use scale_score, scope_score, irremediability_score
+  likelihood_scale?: number;      // @deprecated — use likelihood_score
+
+  // ── ESRS-compliant impact materiality scoring (ESRS 1 para 43) ──
+  scale_score?: number;           // 1–5: how grave the impact is
+  scope_score?: number;           // 1–5: how widespread the impact is
+  irremediability_score?: number; // 1–5: how hard to reverse (negative impacts only)
+  likelihood_score?: number;      // 1–5: probability (1=unlikely, 5=almost certain)
+
+  // ── ESRS-compliant financial materiality scoring (ESRS 1 para 47) ──
+  magnitude_score?: number;       // 1–5: size of financial effect
+  financial_likelihood_score?: number; // 1–5: probability of financial effect
+
+  // ── ESRS-required metadata (ESRS 2 IRO-1, SBM-3) ──
+  time_horizon?: TimeHorizon;             // short (<1y), medium (1–5y), long (>5y)
+  value_chain_location?: ValueChainLocation; // upstream, own_operations, downstream, multiple
+  affected_stakeholders?: string[];        // stakeholder groups affected
+  severity_rationale?: string;             // narrative justifying severity scores
+  financial_rationale?: string;            // narrative justifying financial scores
+
+  // ── Computed scores ──
   financial_materiality_score?: number;  // 0–5 (computed or manual)
   impact_materiality_score?: number;     // 0–5 (computed)
   double_materiality_score?: number;     // 0–5 (derived)
+
   stakeholder_input?: string;
   notes?: string;
 }
@@ -240,31 +274,56 @@ export function getTopicsByPillar(pillar: EsrsPillar): EsrsTopic[] {
 }
 
 // =============================================================================
-// Scoring
+// Scoring — ESRS 1-compliant (scale × scope × irremediability for negative,
+// scale × scope for positive; per-entity thresholds with rationale)
 // =============================================================================
 
 /**
- * Calculate the impact materiality score for a negative impact.
- *
- * Based on ESRS 1.3.3: severity = scale × scope × irremediability
- * For this simplified SME version: severity = scale × scope
- * Combined with likelihood for potential impacts.
- *
- * @param severity  1–5 (scale of the impact)
- * @param likelihood 1–5 (probability, 1 = unlikely, 5 = almost certain)
- * @param isActual   If true, impact is already occurring (likelihood = 5)
- * @returns Impact materiality score (0–5)
+ * Calculate negative impact severity per ESRS 1 para 43.
+ * Severity = scale × scope × irremediability (normalised to 0–5).
  */
+export function calculateNegativeImpactScore(
+  scale: number,
+  scope: number,
+  irremediability: number,
+  likelihood: number,
+  isActual: boolean = false
+): number {
+  const s = clamp(scale, 1, 5);
+  const sc = clamp(scope, 1, 5);
+  const ir = clamp(irremediability, 1, 5);
+  const effectiveLikelihood = isActual ? 5 : clamp(likelihood, 1, 5);
+  const severityRaw = (s * sc * ir) / 25;
+  const severity = clamp(severityRaw, 0, 5);
+  const raw = Math.sqrt(severity * effectiveLikelihood);
+  return round(clamp(raw, 0, 5), 2);
+}
+
+/**
+ * Calculate positive impact severity per ESRS 1 para 47.
+ * Severity = scale × scope (no irremediability for positive impacts).
+ */
+export function calculatePositiveImpactScore(
+  scale: number,
+  scope: number,
+  likelihood: number,
+  isActual: boolean = false
+): number {
+  const s = clamp(scale, 1, 5);
+  const sc = clamp(scope, 1, 5);
+  const effectiveLikelihood = isActual ? 5 : clamp(likelihood, 1, 5);
+  const severity = clamp((s * sc) / 5, 0, 5);
+  const raw = Math.sqrt(severity * effectiveLikelihood);
+  return round(clamp(raw, 0, 5), 2);
+}
+
+/** @deprecated Use calculateNegativeImpactScore or calculatePositiveImpactScore */
 export function calculateImpactScore(
   severity: number,
   likelihood: number,
   isActual: boolean = false
 ): number {
-  const effectiveLikelihood = isActual ? 5 : clamp(likelihood, 1, 5);
-  const s = clamp(severity, 1, 5);
-  // Score = sqrt(severity × likelihood) / 5 × 5 → normalised 0–5
-  const raw = Math.sqrt(s * effectiveLikelihood);
-  return round(clamp(raw, 0, 5), 2);
+  return calculateNegativeImpactScore(severity, 3, 3, likelihood, isActual);
 }
 
 /**
@@ -310,12 +369,27 @@ export function calculateDoubleMaterialityScore(
  *   - < HIGHLY_MATERIAL_THRESHOLD → material
  *   - ≥ HIGHLY_MATERIAL_THRESHOLD → highly_material
  */
-export const MATERIAL_THRESHOLD = 2.5;
-export const HIGHLY_MATERIAL_THRESHOLD = 4.0;
+/** Default thresholds (can be overridden per assessment — ESRS 1 para 44) */
+export const DEFAULT_MATERIAL_THRESHOLD = 2.5;
+export const DEFAULT_HIGHLY_MATERIAL_THRESHOLD = 4.0;
 
-export function classifyMateriality(score: number): MaterialityLevel {
-  if (score < MATERIAL_THRESHOLD) return "not_material";
-  if (score < HIGHLY_MATERIAL_THRESHOLD) return "material";
+/** @deprecated Use DEFAULT_MATERIAL_THRESHOLD */
+export const MATERIAL_THRESHOLD = DEFAULT_MATERIAL_THRESHOLD;
+/** @deprecated Use DEFAULT_HIGHLY_MATERIAL_THRESHOLD */
+export const HIGHLY_MATERIAL_THRESHOLD = DEFAULT_HIGHLY_MATERIAL_THRESHOLD;
+
+/**
+ * Classify a double-materiality score into a materiality level.
+ * Uses per-assessment thresholds when provided (ESRS 1 para 44).
+ */
+export function classifyMateriality(
+  score: number,
+  thresholds?: MaterialityThresholdConfig
+): MaterialityLevel {
+  const matThreshold = thresholds?.material ?? DEFAULT_MATERIAL_THRESHOLD;
+  const highThreshold = thresholds?.highly_material ?? DEFAULT_HIGHLY_MATERIAL_THRESHOLD;
+  if (score < matThreshold) return "not_material";
+  if (score < highThreshold) return "material";
   return "highly_material";
 }
 
@@ -326,27 +400,48 @@ export function computeIroScores(
   iro: Pick<
     IroRecord,
     "iro_type" | "direction" | "severity_scale" | "likelihood_scale"
+      | "scale_score" | "scope_score" | "irremediability_score"
+      | "likelihood_score" | "magnitude_score" | "financial_likelihood_score"
   >
 ): {
   impact_materiality_score: number;
   financial_materiality_score: number;
   double_materiality_score: number;
 } {
-  const severity = iro.severity_scale ?? 3;
-  const likelihood = iro.likelihood_scale ?? 3;
-
   const isActual =
     iro.direction === "actual_negative" || iro.direction === "actual_positive";
+  const isNegative =
+    iro.direction === "actual_negative" || iro.direction === "potential_negative";
 
-  const impactScore =
-    iro.iro_type === "impact"
-      ? calculateImpactScore(severity, likelihood, isActual)
-      : 0;
+  let impactScore = 0;
+  if (iro.iro_type === "impact") {
+    // Use ESRS-compliant fields if available; fall back to legacy severity_scale/likelihood_scale
+    if (iro.scale_score != null && iro.scope_score != null) {
+      const likelihood = iro.likelihood_score ?? iro.likelihood_scale ?? 3;
+      if (isNegative) {
+        const irremediability = iro.irremediability_score ?? 3;
+        impactScore = calculateNegativeImpactScore(
+          iro.scale_score, iro.scope_score, irremediability, likelihood, isActual
+        );
+      } else {
+        impactScore = calculatePositiveImpactScore(
+          iro.scale_score, iro.scope_score, likelihood, isActual
+        );
+      }
+    } else {
+      // Legacy path
+      const severity = iro.severity_scale ?? 3;
+      const likelihood = iro.likelihood_scale ?? 3;
+      impactScore = calculateImpactScore(severity, likelihood, isActual);
+    }
+  }
 
-  const financialScore =
-    iro.iro_type === "risk" || iro.iro_type === "opportunity"
-      ? calculateFinancialScore(severity, likelihood)
-      : 0;
+  let financialScore = 0;
+  if (iro.iro_type === "risk" || iro.iro_type === "opportunity") {
+    const magnitude = iro.magnitude_score ?? iro.severity_scale ?? 3;
+    const likelihood = iro.financial_likelihood_score ?? iro.likelihood_scale ?? 3;
+    financialScore = calculateFinancialScore(magnitude, likelihood);
+  }
 
   return {
     impact_materiality_score: impactScore,
@@ -370,18 +465,19 @@ export function computeIroScores(
  *   - y-axis: financial materiality score
  *   - quadrant: determined by thresholds
  */
-export function buildMatrixData(iros: IroRecord[]): MaterialityMatrixPoint[] {
+export function buildMatrixData(iros: IroRecord[], thresholds?: MaterialityThresholdConfig): MaterialityMatrixPoint[] {
   return iros.map((iro) => {
     const impact = iro.impact_materiality_score ?? 0;
     const financial = iro.financial_materiality_score ?? 0;
     const doubleScore = iro.double_materiality_score ?? Math.max(impact, financial);
 
     let quadrant: MaterialityMatrixPoint["quadrant"];
-    if (impact < MATERIAL_THRESHOLD && financial < MATERIAL_THRESHOLD) {
+    const matThresh = thresholds?.material ?? DEFAULT_MATERIAL_THRESHOLD;
+    if (impact < matThresh && financial < matThresh) {
       quadrant = "not_material";
-    } else if (impact >= MATERIAL_THRESHOLD && financial < MATERIAL_THRESHOLD) {
+    } else if (impact >= matThresh && financial < matThresh) {
       quadrant = "impact";
-    } else if (financial >= MATERIAL_THRESHOLD && impact < MATERIAL_THRESHOLD) {
+    } else if (financial >= matThresh && impact < matThresh) {
       quadrant = "financial";
     } else {
       quadrant = "double";
@@ -412,7 +508,8 @@ export function buildMatrixData(iros: IroRecord[]): MaterialityMatrixPoint[] {
 export function generateSummary(
   assessmentId: string,
   status: MaterialityStatus,
-  iros: IroRecord[]
+  iros: IroRecord[],
+  thresholds?: MaterialityThresholdConfig
 ): MaterialitySummary {
   const matrixData = buildMatrixData(iros);
 
@@ -430,7 +527,7 @@ export function generateSummary(
   const highlyMaterialTopics: string[] = [];
 
   for (const [topicId, score] of topicScores) {
-    const level = classifyMateriality(score);
+    const level = classifyMateriality(score, thresholds);
     if (level === "material" || level === "highly_material") {
       materialTopics.push(topicId);
     }
@@ -485,6 +582,15 @@ export function createDefaultIro(
     direction: "potential_negative",
     topic,
     title: `${getTopicById(topic)?.label ?? topic} — impact assessment`,
+    scale_score: 3,
+    scope_score: 3,
+    irremediability_score: 3,
+    likelihood_score: 3,
+    magnitude_score: 3,
+    financial_likelihood_score: 3,
+    time_horizon: "medium",
+    value_chain_location: "own_operations",
+    // Legacy
     severity_scale: 3,
     likelihood_scale: 3,
   };
@@ -493,7 +599,8 @@ export function createDefaultIro(
 /**
  * Default threshold config (can be overridden per assessment).
  */
-export const DEFAULT_THRESHOLDS = {
-  material: MATERIAL_THRESHOLD,
-  highly_material: HIGHLY_MATERIAL_THRESHOLD,
-} as const;
+export const DEFAULT_THRESHOLDS: MaterialityThresholdConfig = {
+  material: DEFAULT_MATERIAL_THRESHOLD,
+  highly_material: DEFAULT_HIGHLY_MATERIAL_THRESHOLD,
+  rationale: "Default threshold — entity should override with their own rationale per ESRS 1 para 44",
+};

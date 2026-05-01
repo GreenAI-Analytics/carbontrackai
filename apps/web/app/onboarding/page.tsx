@@ -53,7 +53,23 @@ const SECTORS = [
   "Other",
 ];
 
-type Step = "org" | "plan" | "done";
+type Step = "org" | "compliance" | "plan" | "done";
+
+  /** Two-of-three SME classification per Recommendation 2003/361/EC */
+  function classifySme(hc: number, turnover: number, balanceSheet: number): "micro" | "small" | "medium" | "non_sme" {
+    if (hc < 10 && (turnover <= 2_000_000 || balanceSheet <= 2_000_000)) return "micro";
+    if (hc < 50 && (turnover <= 10_000_000 || balanceSheet <= 10_000_000)) return "small";
+    if (hc < 250 && (turnover <= 50_000_000 || balanceSheet <= 43_000_000)) return "medium";
+    return "non_sme";
+  }
+
+  /** Recommend plan based on SME type + compliance drivers */
+  function recommendPlan(smeCategory: string, isListed: boolean, isSubsidiary: boolean, hasRequests: boolean): "vsme_lite" | "vsme_full" | "csrd_full" {
+    if (isSubsidiary) return "csrd_full";
+    if (isListed && smeCategory === "medium") return "csrd_full";
+    if (smeCategory === "medium" || hasRequests) return "vsme_full";
+    return "vsme_lite";
+  }
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -65,7 +81,16 @@ export default function OnboardingPage() {
   const [country, setCountry] = useState("");
   const [sector, setSector] = useState("");
   const [baseYear, setBaseYear] = useState(new Date().getFullYear() - 1);
-  const [plan, setPlan] = useState<"basic" | "comprehensive">("basic");
+  // SME classification fields
+  const [headcount, setHeadcount] = useState("");
+  const [annualTurnover, setAnnualTurnover] = useState("");
+  const [annualBalanceSheet, setAnnualBalanceSheet] = useState("");
+  // Compliance scope
+  const [isListed, setIsListed] = useState(false);
+  const [isSubsidiaryOfLargeGroup, setIsSubsidiaryOfLargeGroup] = useState(false);
+  const [hasCounterpartyRequests, setHasCounterpartyRequests] = useState(false);
+  // Derived
+  const [plan, setPlan] = useState<"vsme_lite" | "vsme_full" | "csrd_full">("vsme_lite");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +107,7 @@ export default function OnboardingPage() {
 
   async function handleOrgSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStep("plan");
+    setStep("compliance");
   }
 
   async function handleFinish(event: FormEvent<HTMLFormElement>) {
@@ -99,7 +124,7 @@ export default function OnboardingPage() {
     // 1. Create organization
     const { data: orgData, error: orgError } = await supabase
       .from("organizations")
-      .insert({ name: orgName, country_code: country, sector, base_year: baseYear })
+      .insert({ name: orgName, country_code: country, sector, base_year: baseYear, headcount: parseInt(headcount) || null, annual_turnover: parseFloat(annualTurnover) || null, annual_balance_sheet: parseFloat(annualBalanceSheet) || null, sme_category: classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0), reporting_basis: isSubsidiaryOfLargeGroup ? "mandatory_csrd" : (isListed ? "mandatory_csrd" : (hasCounterpartyRequests ? "counterparty_request" : "voluntary")), is_listed: isListed, is_subsidiary_of_large_group: isSubsidiaryOfLargeGroup, countries_of_operation: [country] })
       .select("id")
       .single();
 
@@ -123,13 +148,36 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Auto-detect recommended plan
+    const smeCat = classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0);
+    const recommended = recommendPlan(smeCat, isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests);
+    const effectivePlan = plan === "vsme_lite" && recommended !== "vsme_lite" ? recommended : plan;
+
     // 3. Provision feature flags based on chosen plan
+    const isComprehensive = effectivePlan === "vsme_full" || effectivePlan === "csrd_full";
+    const isCsrd = effectivePlan === "csrd_full";
     const { error: flagError } = await supabase.from("feature_flag_subscriptions").insert({
       organization_id: orgData.id,
-      plan_type: plan,
-      scope_3_enabled: plan === "comprehensive",
-      targets_enabled: plan === "comprehensive",
-      climate_risk_enabled: plan === "comprehensive",
+      plan_type: effectivePlan,
+      // Core modules (always free)
+      esrs2_enabled: true,
+      climate_enabled: true,
+      materiality_enabled: true,
+      report_builder_enabled: true,
+      // Environmental extended (comprehensive only)
+      pollution_enabled: isComprehensive,
+      water_enabled: isComprehensive,
+      biodiversity_enabled: isComprehensive,
+      circular_economy_enabled: isComprehensive,
+      // Social (comprehensive only)
+      workforce_enabled: isComprehensive,
+      valuechain_enabled: isComprehensive,
+      communities_enabled: isComprehensive,
+      consumers_enabled: isComprehensive,
+      // Governance (comprehensive only)
+      business_conduct_enabled: isComprehensive,
+      // Cross-cutting
+      taxonomy_enabled: isCsrd,
     });
 
     if (flagError) {
@@ -180,25 +228,26 @@ export default function OnboardingPage() {
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex items-center gap-2">
-            {(["org", "plan"] as Step[]).map((s, i) => (
+            {(["org", "compliance", "plan"] as Step[]).map((s, i) => (
               <div key={s} className="flex items-center gap-2 flex-1">
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
                     step === s
                       ? "bg-primary-600 text-white"
-                      : i < ["org", "plan"].indexOf(step)
+                      : i < ["org", "compliance", "plan"].indexOf(step)
                       ? "bg-primary-100 text-primary-700"
                       : "bg-gray-100 text-gray-400"
                   }`}
                 >
                   {i + 1}
                 </div>
-                {i < 1 && <div className={`h-1 flex-1 rounded ${i < ["org", "plan"].indexOf(step) ? "bg-primary-600" : "bg-gray-200"}`} />}
+                {i < 2 && <div className={`h-1 flex-1 rounded ${i < ["org", "plan"].indexOf(step) ? "bg-primary-600" : "bg-gray-200"}`} />}
               </div>
             ))}
           </div>
           <div className="mt-2 flex justify-between text-xs text-gray-500">
             <span>Organisation</span>
+            <span>Compliance</span>
             <span>Plan</span>
           </div>
         </div>
@@ -282,6 +331,23 @@ export default function OnboardingPage() {
                 </select>
               </div>
 
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label htmlFor="headcount" className="mb-1 block text-sm font-medium text-gray-700">Employees (FTE)</label>
+                  <input id="headcount" type="number" min="0" value={headcount} onChange={(e) => setHeadcount(e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200" placeholder="e.g. 42" />
+                </div>
+                <div>
+                  <label htmlFor="turnover" className="mb-1 block text-sm font-medium text-gray-700">Annual turnover (EUR)</label>
+                  <input id="turnover" type="number" min="0" step="0.01" value={annualTurnover} onChange={(e) => setAnnualTurnover(e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200" placeholder="e.g. 5000000" />
+                </div>
+                <div>
+                  <label htmlFor="balanceSheet" className="mb-1 block text-sm font-medium text-gray-700">Balance sheet (EUR)</label>
+                  <input id="balanceSheet" type="number" min="0" step="0.01" value={annualBalanceSheet} onChange={(e) => setAnnualBalanceSheet(e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200" placeholder="e.g. 2000000" />
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500">Required for SME classification under EU Recommendation 2003/361/EC. An SME qualifies if it meets the headcount threshold AND at least one financial threshold (turnover OR balance sheet).</p>
+
               <button
                 type="submit"
                 className="w-full rounded-lg bg-primary-600 px-4 py-2.5 font-semibold text-white transition hover:bg-primary-700"
@@ -292,7 +358,49 @@ export default function OnboardingPage() {
           </>
         )}
 
-        {/* Step 2: Plan selection */}
+        {/* Step 2: Compliance scope detection */}
+        {step === "compliance" && (
+          <>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Compliance scope</h1>
+            <p className="text-gray-600 mb-6">Help us understand your regulatory obligations so we can recommend the right reporting mode.</p>
+            <form onSubmit={(e) => { e.preventDefault(); setStep("plan"); }} className="space-y-4">
+              <div className="space-y-4">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition">
+                  <input type="checkbox" checked={isListed} onChange={(e) => setIsListed(e.target.checked)} className="mt-1" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Listed on an EU-regulated market?</p>
+                    <p className="text-sm text-gray-600">Shares traded on a stock exchange within the EU/EEA. Under Omnibus I (2025), most listed SMEs now fall outside mandatory CSRD scope.</p>
+                  </div>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition">
+                  <input type="checkbox" checked={isSubsidiaryOfLargeGroup} onChange={(e) => setIsSubsidiaryOfLargeGroup(e.target.checked)} className="mt-1" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Subsidiary of a large group?</p>
+                    <p className="text-sm text-gray-600">Your parent company is a large undertaking required to report under CSRD. This may pull you into mandatory scope.</p>
+                  </div>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition">
+                  <input type="checkbox" checked={hasCounterpartyRequests} onChange={(e) => setHasCounterpartyRequests(e.target.checked)} className="mt-1" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Receiving ESG data requests from banks, customers, or investors?</p>
+                    <p className="text-sm text-gray-600">A VSME report serves as your value-chain shield — one standardised response for all counterparty requests.</p>
+                  </div>
+                </label>
+              </div>
+
+              <p className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                Based on your answers, we recommend: <strong>{recommendPlan(classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0), isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests) === "vsme_lite" ? "VSME-Lite (Free)" : recommendPlan(classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0), isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests) === "vsme_full" ? "VSME-Full (99/mo)" : "CSRD-Full (99/mo)"}</strong>
+              </p>
+
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setStep("org")} className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 font-semibold text-gray-700 transition hover:bg-gray-50">Back</button>
+                <button type="submit" className="flex-1 rounded-lg bg-primary-600 px-4 py-2.5 font-semibold text-white transition hover:bg-primary-700">Continue to plan</button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {/* Step 3: Plan selection */}
         {step === "plan" && (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Choose your plan</h1>
@@ -301,46 +409,46 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 <label
                   className={`flex cursor-pointer rounded-xl border-2 p-4 transition gap-4 ${
-                    plan === "basic" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
+                    plan === "vsme_lite" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <input
                     type="radio"
                     name="plan"
-                    value="basic"
-                    checked={plan === "basic"}
-                    onChange={() => setPlan("basic")}
+                    value="vsme_lite"
+                    checked={plan === "vsme_lite"}
+                    onChange={() => setPlan("vsme_lite")}
                     className="mt-1"
                   />
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Basic — Free
+                      VSME-Lite — Free
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
-                      Scope 1 &amp; 2 reporting, country-specific grid factors, annual report export (Excel + PDF).
+                      Basic climate (Scope 1 & 2), basic workforce, basic governance, simplified materiality. Always free.
                     </p>
                   </div>
                 </label>
 
                 <label
                   className={`flex cursor-pointer rounded-xl border-2 p-4 transition gap-4 ${
-                    plan === "comprehensive" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
+                    plan === "vsme_full" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <input
                     type="radio"
                     name="plan"
-                    value="comprehensive"
-                    checked={plan === "comprehensive"}
-                    onChange={() => setPlan("comprehensive")}
+                    value="vsme_full"
+                    checked={plan === "vsme_full"}
+                    onChange={() => setPlan("vsme_full")}
                     className="mt-1"
                   />
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Comprehensive — €99 / month <span className="ml-1 text-xs font-normal text-gray-500">30-day free trial</span>
+                      VSME-Full — €99 / month <span className="ml-1 text-xs font-normal text-gray-500">30-day free trial</span>
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
-                      Everything in Basic plus Scope 3 tracking, reduction targets, climate risk, supplier &amp; product PCF.
+                      Full Environmental (E1–E5), full Social (S1–S4), full Governance (G1), simplified EU Taxonomy. 30-day free trial.
                     </p>
                   </div>
                 </label>
