@@ -1,3 +1,4 @@
 {
-  "installCommand": "npm install --prefix ../.."
+  "installCommand": "cd ../.. && npm install",
+  "buildCommand": "cd ../.. && npx next build apps/web"
 }
