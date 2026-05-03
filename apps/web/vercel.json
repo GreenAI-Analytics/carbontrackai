@@ -1,4 +1,0 @@
-{
-  "installCommand": "npm --prefix ../.. install",
-  "buildCommand": "npm --prefix ../.. run build -w @carbontrackai/web"
-}
