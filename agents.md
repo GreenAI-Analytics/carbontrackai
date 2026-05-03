@@ -563,7 +563,7 @@ type EsgFeatureFlags = {
 
 | Module | Page | Tables |
 |--------|------|--------|
-| E1 Climate | Activity Data, Emissions Results, Climate Hub | `activity_records`, `calculation_runs`, `emission_factors` |
+| E1 Climate | Activity Data, Emissions Results, Climate Hub | `activity_records`, `calculation_runs`, `emission_factors`, `contractual_instruments` — dual Scope 2 (location + market-based) with AIB residual mix, GoO/PPA/REC tracking |
 | E2 Pollution | `/esg/environmental/pollution` | `pollutant_inventories` |
 | E3 Water | `/esg/environmental/water` | `water_consumption`, `water_discharge` |
 | E4 Biodiversity | `/esg/environmental/biodiversity` | `biodiversity_sites` |
@@ -599,7 +599,7 @@ type EsgFeatureFlags = {
 | Module | Page | Tables |
 |--------|------|--------|
 | Report Builder | `/dashboard/reports` | `report_snapshots` (migration 17) — cross-pillar aggregation, JSON export |
-| Settings | `/dashboard/settings` | `organizations`, `user_roles`, `feature_flag_subscriptions` — profile, plan, team, danger zone |
+| Settings | `/dashboard/settings` | `organizations`, `user_roles`, `feature_flag_subscriptions` — profile, plan, team, danger zone, Climatiq refresh button |
 
 ### 📦 Computation Libraries
 
@@ -610,6 +610,7 @@ type EsgFeatureFlags = {
 | `lib/social-metrics.ts` | S1 workforce KPIs — headcount, turnover, H&S, training, pay gap, work-life (291 lines) |
 | `lib/governance-metrics.ts` | G1 governance KPIs — board, ethics, compliance, privacy, whistleblower, suppliers, political (203 lines) |
 | `lib/taxonomy.ts` | EU Taxonomy — eligibility, alignment, turnover/CapEx/OpEx KPIs, 3 depth levels, 19 NACE codes (143 lines) |
+| `lib/climatiq.ts` | Climatiq Data API v1 client — fetches emission factors for 5 activity types across 27 EU countries, maps to internal format (181 lines) |
 
 ### 🗄️ Database — 17 Migrations
 
@@ -631,14 +632,16 @@ type EsgFeatureFlags = {
 | 15 | Materiality RLS policies (INSERT/UPDATE/DELETE) |
 | 16 | SME classification columns on `organizations` |
 | 17 | `report_snapshots` — immutable JSONB report storage |
+| 18 | Scope 2 market-based: `contractual_instruments` (GoOs, PPAs, RECs), `biogenic_co2_kg`, `emission_factor_ids` |
 
 ### 🔔 Future / Not Yet Implemented
 
-- **Scope 2 market-based** — `scope_2_market` enum exists but computation not built
-- **Factor refresh jobs** — no Climatiq/national API adapters for automated updates
 - **CI pipeline** — no automated tests
 - **Offline draft + sync** — no PWA
-
+- **Admin dashboard** — no factor/audit management UI
+- **Shared types package** — no `@carbontrackai/shared` workspace
+- **iXBRL / ESEF export** — planned for CSRD-mode users
+- **Multilingual reports** — i18n on UI strings not yet implemented
 
 ## 6. Key Data Flows
 
@@ -1148,8 +1151,8 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 ## 11. Known Issues & Gotchas
 
 - **RLS on insert was missing initially** — migration `20260411000400` fixed this for `user_roles` and `feature_flag_subscriptions`. Any new ESG table must have INSERT policies or onboarding/data entry will fail.
-- **No shared types package yet** — types in `lib/calculations.ts` are duplicated across components. Create `@carbontrackai/shared` workspace when building ESG module UIs.
-- **ESG module UIs are placeholder pages only** — all 18 ESG module routes exist (environmental, social, governance, general disclosures, materiality, taxonomy, reports, settings) but data entry forms, calculations, and dashboards need to be built.
+- **No shared types package yet** — types across lib/*.ts are duplicated across components. Creating `@carbontrackai/shared` workspace would reduce duplication.
+- **ESG module UIs are all fully implemented** — all 25 pages have real data entry forms, calculations, and dashboards. Zero placeholders remain.
 - **Emissions page is 428 lines** — too large. Refactor into smaller components (calculation runner, results table, factor provenance panel).
 - **VSME→ESRS remapping needed** — the original 5 VSME modules don't map 1:1 to ESRS topical standards. Use the mapping tables in section 4 to guide refactoring.
 - **ESRS 2 narrative UI not yet built** — all 7 ESRS 2 tables exist in schema (Migration 10) but the narrative disclosure pages and forms are not yet implemented.
