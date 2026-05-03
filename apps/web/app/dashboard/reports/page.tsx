@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
+import { generateIxbrl, mapReportToIxbrl } from "@/lib/ixbrl";
 
 type Period = { id: string; year: number; is_locked: boolean };
 type Snapshot = { id: string; title: string; status: string; created_at: string };
@@ -157,6 +158,24 @@ export default function ReportsPage() {
     setSnapshots(snaps ?? []);
   }
 
+  function exportIxbrl() {
+    if (!reportData) return;
+    const dps = mapReportToIxbrl(reportData);
+    const ixbrl = generateIxbrl(dps, {
+      entityName: reportData.meta.organization,
+      entityIdentifier: reportData.meta.country + "-" + (reportData.meta.sector || "N/A"),
+      reportingYear: reportData.meta.reportingYear,
+      generatedAt: new Date().toISOString(),
+    });
+    const blob = new Blob([ixbrl], { type: "application/xhtml+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "esg-report-" + reportData.meta.reportingYear + ".xhtml";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function exportJSON() {
     if (!reportData) return;
     const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: "application/json" });
@@ -197,7 +216,8 @@ export default function ReportsPage() {
               </select>
             </div>
             <div className="flex gap-2 items-end">
-              <button onClick={exportJSON} disabled={!reportData || generating} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">📥 Export JSON</button>
+              <button onClick={exportJSON} disabled={!reportData || generating} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">📥 JSON</button>
+              <button onClick={exportIxbrl} disabled={!reportData || generating} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">📄 iXBRL</button>
               <button onClick={generateSnapshot} disabled={!reportData || generating} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50">📸 Generate Snapshot</button>
               {generated && <span className="text-sm text-emerald-600 font-medium">✓ Snapshot saved</span>}
             </div>
