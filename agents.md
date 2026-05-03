@@ -14,6 +14,8 @@
 | **Stack** | Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 (frontend), Supabase PostgreSQL (backend/database) |
 | **Package Manager** | npm (workspaces monorepo) |
 | **License** | TBD |
+| **Production URL** | https://carbontrackai-eight.vercel.app |
+| **CI/CD** | GitHub Actions (typecheck, lint, build) → Vercel auto-deploy |
 
 ### Regulatory Framework
 
@@ -36,7 +38,7 @@ The platform adapts dynamically to SME size and regulatory scope, supporting thr
 
 ### Platform Modes
 
-> **Naming note**: The official EFRAG VSME standard (published Dec 2024) defines two modules: **Basic Module (B1–B11)** and **Comprehensive Module (C1–C9)**. The codebase currently uses the legacy names `VSME Basic` and `VSME Comprehensive`. A P0 migration to align with the official `vsme_basic` / `vsme_comprehensive` / `csrd` enum is planned — see `features.md` §1.1.
+> **Naming note**: The official EFRAG VSME standard (published Dec 2024) defines two modules: **Basic Module (B1–B11)** and **Comprehensive Module (C1–C9)**. The codebase currently uses the legacy names `VSME Basic` and `VSME Comprehensive`. Migration 19 aligned the enum with the official EFRAG naming: `vsme_basic` / `vsme_comprehensive` / `csrd`. See `features.md` §1.1 (marked as RESOLVED).
 
 | Mode | Official EFRAG Equivalent | Description |
 |---|---|---|
@@ -104,27 +106,27 @@ apps/web/
 │   │   │   └── page.tsx                    # Scope 1 & 2 calculation results + run trigger
 │   │   ├── esg/
 │   │   │   ├── environmental/
-│   │   │   │   ├── climate/page.tsx        # E1 placeholder
-│   │   │   │   ├── pollution/page.tsx      # E2 placeholder
-│   │   │   │   ├── water/page.tsx          # E3 placeholder
-│   │   │   │   ├── biodiversity/page.tsx   # E4 placeholder
-│   │   │   │   └── circular/page.tsx       # E5 placeholder
+│   │   │   │   ├── climate/page.tsx        # E1 Implemented
+│   │   │   │   ├── pollution/page.tsx      # E2 Implemented
+│   │   │   │   ├── water/page.tsx          # E3 Implemented
+│   │   │   │   ├── biodiversity/page.tsx   # E4 Implemented
+│   │   │   │   └── circular/page.tsx       # E5 Implemented
 │   │   │   ├── social/
-│   │   │   │   ├── workforce/page.tsx      # S1 placeholder
-│   │   │   │   ├── valuechain/page.tsx     # S2 placeholder
-│   │   │   │   ├── communities/page.tsx    # S3 placeholder
-│   │   │   │   └── consumers/page.tsx      # S4 placeholder
+│   │   │   │   ├── workforce/page.tsx      # S1 Implemented
+│   │   │   │   ├── valuechain/page.tsx     # S2 Implemented
+│   │   │   │   ├── communities/page.tsx    # S3 Implemented
+│   │   │   │   └── consumers/page.tsx      # S4 Implemented
 │   │   │   ├── governance/
-│   │   │   │   ├── ethics/page.tsx         # G1 ethics placeholder
-│   │   │   │   ├── compliance/page.tsx     # G1 compliance placeholder
-│   │   │   │   └── dataprivacy/page.tsx    # G1 data privacy placeholder
+│   │   │   │   ├── ethics/page.tsx         # G1 ethics Implemented
+│   │   │   │   ├── compliance/page.tsx     # G1 compliance Implemented
+│   │   │   │   └── dataprivacy/page.tsx    # G1 data privacy Implemented
 │   │   │   └── general/
-│   │   │       ├── governance/page.tsx     # ESRS 2 GOV/SBM placeholder
-│   │   │       └── iro-management/page.tsx # ESRS 2 IRO placeholder
-│   │   ├── materiality/page.tsx            # Double materiality placeholder
-│   │   ├── taxonomy/page.tsx               # EU Taxonomy placeholder
-│   │   ├── reports/page.tsx                # Report builder placeholder
-│   │   ├── settings/page.tsx               # Settings placeholder
+│   │   │       ├── governance/page.tsx     # ESRS 2 GOV/SBM Implemented
+│   │   │       └── iro-management/page.tsx # ESRS 2 IRO Implemented
+│   │   ├── materiality/page.tsx            # Double materiality Implemented
+│   │   ├── taxonomy/page.tsx               # EU Taxonomy Implemented
+│   │   ├── reports/page.tsx                # Report builder Implemented
+│   │   ├── settings/page.tsx               # Settings Implemented
 │   │   ├── layout.tsx                      # Dashboard shell (header + sidebar nav)
 │   │   └── page.tsx                        # Dashboard overview (ESG pillar cards, carbon KPIs, checklist)
 │   ├── forgot-password/
@@ -219,31 +221,31 @@ The sidebar hides modules not applicable to the SME's scope.
 | | | | |
 | **🌍 Environmental** | | | |
 | → Energy & Emissions | `/dashboard/esg/environmental/climate` | ESRS E1 | 🟡 Placeholder (Scope 1&2 done) |
-| → Pollution | `/dashboard/esg/environmental/pollution` | ESRS E2 | 🟡 Placeholder (DB schema ready) |
-| → Water | `/dashboard/esg/environmental/water` | ESRS E3 | 🟡 Placeholder (DB schema ready) |
-| → Biodiversity | `/dashboard/esg/environmental/biodiversity` | ESRS E4 | 🟡 Placeholder (DB schema ready) |
-| → Circular Economy | `/dashboard/esg/environmental/circular` | ESRS E5 | 🟡 Placeholder (DB schema ready) |
+| → Pollution | `/dashboard/esg/environmental/pollution` | ESRS E2 | ✅ Implemented |
+| → Water | `/dashboard/esg/environmental/water` | ESRS E3 | ✅ Implemented |
+| → Biodiversity | `/dashboard/esg/environmental/biodiversity` | ESRS E4 | ✅ Implemented |
+| → Circular Economy | `/dashboard/esg/environmental/circular` | ESRS E5 | ✅ Implemented |
 | | | | |
 | **👥 Social** | | | |
-| → Workforce | `/dashboard/esg/social/workforce` | ESRS S1 | 🟡 Placeholder (DB schema ready) |
-| → Value Chain | `/dashboard/esg/social/valuechain` | ESRS S2 | 🟡 Placeholder (DB schema ready) |
-| → Communities | `/dashboard/esg/social/communities` | ESRS S3 | 🟡 Placeholder (DB schema ready) |
-| → Consumers | `/dashboard/esg/social/consumers` | ESRS S4 | 🟡 Placeholder (DB schema ready) |
+| → Workforce | `/dashboard/esg/social/workforce` | ESRS S1 | ✅ Implemented |
+| → Value Chain | `/dashboard/esg/social/valuechain` | ESRS S2 | ✅ Implemented |
+| → Communities | `/dashboard/esg/social/communities` | ESRS S3 | ✅ Implemented |
+| → Consumers | `/dashboard/esg/social/consumers` | ESRS S4 | ✅ Implemented |
 | | | | |
 | **🏛️ Governance** | | | |
-| → Business Ethics | `/dashboard/esg/governance/ethics` | ESRS G1 | 🟡 Placeholder (DB schema ready) |
-| → Compliance | `/dashboard/esg/governance/compliance` | ESRS G1 | 🟡 Placeholder (DB schema ready) |
-| → Data Privacy | `/dashboard/esg/governance/dataprivacy` | ESRS G1 + GDPR | 🟡 Placeholder (DB schema ready) |
+| → Business Ethics | `/dashboard/esg/governance/ethics` | ESRS G1 | ✅ Implemented |
+| → Compliance | `/dashboard/esg/governance/compliance` | ESRS G1 | ✅ Implemented |
+| → Data Privacy | `/dashboard/esg/governance/dataprivacy` | ESRS G1 + GDPR | ✅ Implemented |
 | | | | |
 | **📋 General Disclosures (ESRS 2)** | | | |
-| → Governance & Strategy | `/dashboard/esg/general/governance` | ESRS 2 (GOV, SBM) | 🟡 Placeholder (DB schema ready) |
-| → IRO Management | `/dashboard/esg/general/iro-management` | ESRS 2 (IRO) | 🟡 Placeholder (DB schema ready) |
+| → Governance & Strategy | `/dashboard/esg/general/governance` | ESRS 2 (GOV, SBM) | ✅ Implemented |
+| → IRO Management | `/dashboard/esg/general/iro-management` | ESRS 2 (IRO) | ✅ Implemented |
 | | | | |
 | **⚖️ Overarching** | | | |
-| → Double Materiality | `/dashboard/materiality` | ESRS 1, IRO-1 | 🟡 Placeholder (DB schema ready) |
-| → EU Taxonomy | `/dashboard/taxonomy` | EU Taxonomy Reg. | 🟡 Placeholder (DB schema ready) |
+| → Double Materiality | `/dashboard/materiality` | ESRS 1, IRO-1 | ✅ Implemented |
+| → EU Taxonomy | `/dashboard/taxonomy` | EU Taxonomy Reg. | ✅ Implemented |
 | | | | |
-| **📄 Reports** | `/dashboard/reports` | All ESRS | 🟡 Placeholder (DB schema ready) |
+| **📄 Reports** | `/dashboard/reports` | All ESRS | ✅ Implemented |
 | **⚙️ Settings** | `/dashboard/settings` | — | 🟡 Placeholder |
 
 ### 2.5 Carbon Calculation Engine (`lib/calculations.ts`)
@@ -555,7 +557,7 @@ type EsgFeatureFlags = {
 
 ## 5. Current Implementation Status
 
-> **Last updated**: after build session completing all 25 pages (see commits `1b4cb17` through `26d6b74`).
+> **Last updated**: May 2026. Production-deployed, 25 migrations, 26 pages, 8 libraries, zero TypeScript errors.
 
 ### ✅ All Modules Implemented — Zero Placeholders
 
@@ -601,7 +603,7 @@ type EsgFeatureFlags = {
 | Report Builder | `/dashboard/reports` | `report_snapshots` (migration 17) — cross-pillar aggregation, JSON export |
 | Settings | `/dashboard/settings` | `organizations`, `user_roles`, `feature_flag_subscriptions` — profile, plan, team, danger zone, Climatiq refresh |
 
-#### U0001F6E1 GDPR & Data Protection
+#### 🛡️ GDPR & Data Protection
 
 - `whistleblower_officer` role added to `user_role` enum (migration 20a)
 - `whistleblower_cases` restricted to admin + whistleblower_officer (Directive 2019/1937 Art. 16)
@@ -619,8 +621,10 @@ type EsgFeatureFlags = {
 | `lib/governance-metrics.ts` | G1 governance KPIs — board, ethics, compliance, privacy, whistleblower, suppliers, political (203 lines) |
 | `lib/taxonomy.ts` | EU Taxonomy — eligibility, alignment, turnover/CapEx/OpEx KPIs, 3 depth levels, 19 NACE codes (143 lines) |
 | `lib/climatiq.ts` | Climatiq Data API v1 client — fetches emission factors for 5 activity types across 27 EU countries, maps to internal format (181 lines) |
+| `lib/greenwashing.ts` | Green Claims Directive (EU 2024/825) — detects 25 high-risk + 12 medium-risk unsubstantiated environmental terms in narrative text (137 lines) |
+| `lib/ixbrl.ts` | ESEF iXBRL generator — ESRS XBRL taxonomy inline tagging, 23 datapoint mappings, XHTML output (212 lines) |
 
-### 🗄️ Database — 17 Migrations
+### 🗄️ Database — 25 Migrations
 
 | # | Purpose |
 |---|--------|
@@ -636,23 +640,35 @@ type EsgFeatureFlags = {
 | 11 | ESRS datapoint taxonomy: 27 datapoints |
 | 12 | Assurance & change tracking |
 | 13 | Plan type enum update + 14 ESG feature flag columns |
-| 14 | RLS recursion fix (SECURITY DEFINER helpers) |
-| 15 | Materiality RLS policies (INSERT/UPDATE/DELETE) |
-| 16 | SME classification columns on `organizations` |
-| 17 | `report_snapshots` — immutable JSONB report storage |
-| 18 | Scope 2 market-based: `contractual_instruments`, `biogenic_co2_kg`, `emission_factor_ids` |
-| 19 | Rename plan_type enum to EFRAG VSME: `vsme_basic` / `vsme_comprehensive` / `csrd` |
-| 20a | Add `whistleblower_officer` to user_role enum |
-| 20b | GDPR RLS guards: restrict whistleblower_cases (admin+WB-officer), discrimination_incidents (admin-only) |
+| 14 | RLS recursion fix |
+| 15 | Materiality RLS policies |
+| 16 | SME classification columns |
+| 17 | report_snapshots immutable storage |
+| 18 | Scope 2 market-based |
+| 19 | VSME enum rename |
+| 20a | whistleblower_officer role |
+| 20b | GDPR RLS guards |
 | 21 | Materiality ESRS 1 columns: `scale_score`, `scope_score`, `irremediability_score`, `time_horizon`, `value_chain_location`, per-assessment thresholds |
+| 22 | Pay Transparency Directive (EU 2023/970): quartile distribution, pay components, job_category_pay_gap, joint_pay_assessment |
+| 23 | Whistleblower channel: case_reference, case_status, timers (7-day ack, 3-month feedback), anti-retaliation policy |
+| 24 | XBRL tags: xbrl_tag and xbrl_namespace columns on esrs_datapoints, seeded 27 concept names from EFRAG taxonomy |
+| 25 | Country overlays: per-member-state regulatory config — 8 countries seeded (DE, FR, IT, ES, NL, PL, AT, SE, DK) |
+
+### ✅ Recently Completed
+
+- **CI pipeline** — GitHub Actions: TypeScript check, ESLint, Next.js build on push
+- **Admin dashboard** — factor sources, audit log viewer, system statistics
+- **iXBRL / ESEF export** — embedded XBRL tags in XHTML, 23 datapoint mappings
+- **Greenwashing detection** — live flagging on strategy narrative (Green Claims Dir. 2024/825)
+- **Pay Transparency Directive** — quartile distribution, pay components, job categories, joint assessment
+- **Whistleblower channel** — anonymous web form, case timers, Directive 2019/1937 compliant
+- **Country overlays** — 8 EU member states with filing portals, factor authorities, labour law extensions
+- **Demo data** — comprehensive seed script for all ESG modules
 
 ### 🔔 Future / Not Yet Implemented
 
-- **CI pipeline** — no automated tests
 - **Offline draft + sync** — no PWA
-- **Admin dashboard** — no factor/audit management UI
 - **Shared types package** — no `@carbontrackai/shared` workspace
-- **iXBRL / ESEF export** — planned for CSRD-mode users
 - **Multilingual reports** — i18n on UI strings not yet implemented
 
 ## 6. Key Data Flows
@@ -1109,7 +1125,7 @@ The script is idempotent — it skips records that already exist.
 
 ## Double Materiality Module
 
-A full double materiality assessment UI has been built, replacing the placeholder page.
+A full double materiality assessment UI has been built, replacing the Implemented page.
 
 ### Pages
 
@@ -1164,7 +1180,7 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 
 - **RLS on insert was missing initially** — migration `20260411000400` fixed this for `user_roles` and `feature_flag_subscriptions`. Any new ESG table must have INSERT policies or onboarding/data entry will fail.
 - **No shared types package yet** — types across lib/*.ts are duplicated across components. Creating `@carbontrackai/shared` workspace would reduce duplication.
-- **ESG module UIs are all fully implemented** — all 25 pages have real data entry forms, calculations, and dashboards. Zero placeholders remain.
+- **ESG module UIs are all fully implemented** — all 25 pages have real data entry forms, calculations, and dashboards. Zero Implementeds remain.
 - **Emissions page is 428 lines** — too large. Refactor into smaller components (calculation runner, results table, factor provenance panel).
 - **VSME→ESRS remapping needed** — the original 5 VSME modules don't map 1:1 to ESRS topical standards. Use the mapping tables in section 4 to guide refactoring.
 - **ESRS 2 narrative UI not yet built** — all 7 ESRS 2 tables exist in schema (Migration 10) but the narrative disclosure pages and forms are not yet implemented.
@@ -1184,7 +1200,7 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 - **Session cookies not synced with proxy middleware** — fixed browser Supabase client to use `createBrowserClient` from `@supabase/ssr` (was using plain `createClient` which only stored sessions in localStorage).
 - **Tailwind v4 custom colors not resolving** — fixed by moving `primary` color palette from `tailwind.config.ts` (ignored by v4) into `globals.css` via `@theme` directive.
 - **Missing INSERT/UPDATE/DELETE RLS on materiality tables** — fixed in migration 15. The original migration 8 only created SELECT policies, preventing users from adding IROs through the API.
-- **Double Materiality placeholder page** — replaced the "Coming soon" placeholder with a full working UI: assessment list, IRO Register CRUD, materiality matrix visualization, and summary with topic-level classification.
+- **Double Materiality Implemented page** — replaced the "Coming soon" Implemented with a full working UI: assessment list, IRO Register CRUD, materiality matrix visualization, and summary with topic-level classification.
 
 ---
 
