@@ -71,7 +71,7 @@ const ESG_PILLARS: EsgPillar[] = [
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200",
     modules: 3,
-    modulesCompleted: 1, // Business Conduct (G1) implemented
+    modulesCompleted: 2, // Business Conduct + Compliance
     description: "Board, Ethics, Compliance, Whistleblower, Data Privacy, Supply Chain",
     href: "/dashboard/esg/governance/ethics",
   },
