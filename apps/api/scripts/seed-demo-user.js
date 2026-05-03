@@ -206,12 +206,12 @@ async function provisionFeatureFlags(orgId) {
     return existingFlags;
   }
 
-  console.log(`🚩 Provisioning feature flags (plan: csrd_full)...`);
+  console.log(`🚩 Provisioning feature flags (plan: csrd)...`);
   const { data: flags, error } = await supabase
     .from("feature_flag_subscriptions")
     .insert({
       organization_id: orgId,
-      plan_type: "csrd_full",
+      plan_type: "csrd",
     })
     .select("id, plan_type")
     .single();
@@ -289,7 +289,7 @@ async function main() {
   console.log(`   Email:    ${DEMO_USER.email}`);
   console.log(`   Password: ${DEMO_USER.password}`);
   console.log(`   Org:      ${DEMO_ORG.name}`);
-  console.log(`   Plan:     csrd_full\n`);
+  console.log(`   Plan:     csrd\n`);
   console.log(`   Login at: http://localhost:3000/login\n`);
 }
 

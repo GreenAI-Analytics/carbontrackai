@@ -64,11 +64,11 @@ type Step = "org" | "compliance" | "plan" | "done";
   }
 
   /** Recommend plan based on SME type + compliance drivers */
-  function recommendPlan(smeCategory: string, isListed: boolean, isSubsidiary: boolean, hasRequests: boolean): "vsme_lite" | "vsme_full" | "csrd_full" {
-    if (isSubsidiary) return "csrd_full";
-    if (isListed && smeCategory === "medium") return "csrd_full";
-    if (smeCategory === "medium" || hasRequests) return "vsme_full";
-    return "vsme_lite";
+  function recommendPlan(smeCategory: string, isListed: boolean, isSubsidiary: boolean, hasRequests: boolean): "vsme_basic" | "vsme_comprehensive" | "csrd" {
+    if (isSubsidiary) return "csrd";
+    if (isListed && smeCategory === "medium") return "csrd";
+    if (smeCategory === "medium" || hasRequests) return "vsme_comprehensive";
+    return "vsme_basic";
   }
 
 export default function OnboardingPage() {
@@ -90,7 +90,7 @@ export default function OnboardingPage() {
   const [isSubsidiaryOfLargeGroup, setIsSubsidiaryOfLargeGroup] = useState(false);
   const [hasCounterpartyRequests, setHasCounterpartyRequests] = useState(false);
   // Derived
-  const [plan, setPlan] = useState<"vsme_lite" | "vsme_full" | "csrd_full">("vsme_lite");
+  const [plan, setPlan] = useState<"vsme_basic" | "vsme_comprehensive" | "csrd">("vsme_basic");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,11 +151,11 @@ export default function OnboardingPage() {
     // Auto-detect recommended plan
     const smeCat = classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0);
     const recommended = recommendPlan(smeCat, isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests);
-    const effectivePlan = plan === "vsme_lite" && recommended !== "vsme_lite" ? recommended : plan;
+    const effectivePlan = plan === "vsme_basic" && recommended !== "vsme_basic" ? recommended : plan;
 
     // 3. Provision feature flags based on chosen plan
-    const isComprehensive = effectivePlan === "vsme_full" || effectivePlan === "csrd_full";
-    const isCsrd = effectivePlan === "csrd_full";
+    const isComprehensive = effectivePlan === "vsme_comprehensive" || effectivePlan === "csrd";
+    const isCsrd = effectivePlan === "csrd";
     const { error: flagError } = await supabase.from("feature_flag_subscriptions").insert({
       organization_id: orgData.id,
       plan_type: effectivePlan,
@@ -389,7 +389,7 @@ export default function OnboardingPage() {
               </div>
 
               <p className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                Based on your answers, we recommend: <strong>{recommendPlan(classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0), isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests) === "vsme_lite" ? "VSME-Lite (Free)" : recommendPlan(classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0), isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests) === "vsme_full" ? "VSME-Full (99/mo)" : "CSRD-Full (99/mo)"}</strong>
+                Based on your answers, we recommend: <strong>{recommendPlan(classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0), isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests) === "vsme_basic" ? "VSME Basic (Free)" : recommendPlan(classifySme(parseInt(headcount) || 0, parseFloat(annualTurnover) || 0, parseFloat(annualBalanceSheet) || 0), isListed, isSubsidiaryOfLargeGroup, hasCounterpartyRequests) === "vsme_comprehensive" ? "VSME Comprehensive (99/mo)" : "CSRD (99/mo)"}</strong>
               </p>
 
               <div className="flex gap-3">
@@ -409,15 +409,15 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 <label
                   className={`flex cursor-pointer rounded-xl border-2 p-4 transition gap-4 ${
-                    plan === "vsme_lite" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
+                    plan === "vsme_basic" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <input
                     type="radio"
                     name="plan"
-                    value="vsme_lite"
-                    checked={plan === "vsme_lite"}
-                    onChange={() => setPlan("vsme_lite")}
+                    value="vsme_basic"
+                    checked={plan === "vsme_basic"}
+                    onChange={() => setPlan("vsme_basic")}
                     className="mt-1"
                   />
                   <div>
@@ -432,15 +432,15 @@ export default function OnboardingPage() {
 
                 <label
                   className={`flex cursor-pointer rounded-xl border-2 p-4 transition gap-4 ${
-                    plan === "vsme_full" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
+                    plan === "vsme_comprehensive" ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <input
                     type="radio"
                     name="plan"
-                    value="vsme_full"
-                    checked={plan === "vsme_full"}
-                    onChange={() => setPlan("vsme_full")}
+                    value="vsme_comprehensive"
+                    checked={plan === "vsme_comprehensive"}
+                    onChange={() => setPlan("vsme_comprehensive")}
                     className="mt-1"
                   />
                   <div>

@@ -1,6 +1,6 @@
 # CarbonTrackAI — Agent Guide
 
-> **Purpose**: This document gives AI agents (and human developers) a complete map of the CarbonTrackAI repository — a unified ESG reporting platform for EU SMEs (< 250 employees) with SME-proportionate workflows (VSME-Lite, VSME-Full, CSRD-Full). Navigate, edit, and reason about the codebase without guesswork.
+> **Purpose**: This document gives AI agents (and human developers) a complete map of the CarbonTrackAI repository — a unified ESG reporting platform for EU SMEs (< 250 employees) with SME-proportionate workflows (VSME Basic, VSME Comprehensive, CSRD). Navigate, edit, and reason about the codebase without guesswork.
 
 ---
 
@@ -9,7 +9,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Name** | CarbonTrackAI |
-| **Description** | ESG reporting for EU SMEs per Recommendation 2003/361/EC (micro <10 + ≤€2M turnover/balance, small <50 + ≤€10M, medium <250 + ≤€50M turnover/≤€43M balance) — VSME-first with CSRD/ESRS alignment for in-scope listed SMEs. Three proportionate modes: VSME-Lite, VSME-Full, CSRD-Full. |
+| **Description** | ESG reporting for EU SMEs per Recommendation 2003/361/EC (micro <10 + ≤€2M turnover/balance, small <50 + ≤€10M, medium <250 + ≤€50M turnover/≤€43M balance) — VSME-first with CSRD/ESRS alignment for in-scope listed SMEs. Three proportionate modes: VSME Basic, VSME Comprehensive, CSRD. |
 | **Repository** | `https://github.com/GreenAI-Analytics/carbontrackai` |
 | **Stack** | Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 (frontend), Supabase PostgreSQL (backend/database) |
 | **Package Manager** | npm (workspaces monorepo) |
@@ -25,30 +25,30 @@ The platform adapts dynamically to SME size and regulatory scope, supporting thr
 
 | SME Type | Staff Headcount | Turnover (annual) | OR Balance Sheet | CSRD Mandatory? | Platform Mode |
 |---|---|---|---|---|---|
-| **Micro** | < 10 | ≤ €2M | ≤ €2M | ❌ No | **VSME-Lite** |
-| **Small** | < 50 | ≤ €10M | ≤ €10M | ❌ No (unless listed) | **VSME-Lite / VSME-Full** |
-| **Medium** | < 250 | ≤ €50M | ≤ €43M | ❌ No (unless listed) | **VSME-Full / CSRD-Full** |
-| **Listed SMEs** | Listed on regulated market | — | — | ⚠ Omnibus-dependent | **VSME-Full / CSRD-Full** |
-| **Subsidiaries of large groups** | Required by parent | — | — | ⚠ Possibly | **CSRD-Full** |
+| **Micro** | < 10 | ≤ €2M | ≤ €2M | ❌ No | **VSME Basic** |
+| **Small** | < 50 | ≤ €10M | ≤ €10M | ❌ No (unless listed) | **VSME Basic / VSME Comprehensive** |
+| **Medium** | < 250 | ≤ €50M | ≤ €43M | ❌ No (unless listed) | **VSME Comprehensive / CSRD** |
+| **Listed SMEs** | Listed on regulated market | — | — | ⚠ Omnibus-dependent | **VSME Comprehensive / CSRD** |
+| **Subsidiaries of large groups** | Required by parent | — | — | ⚠ Possibly | **CSRD** |
 
-> **Omnibus I (2025) note**: Under the proposed Omnibus simplification package, the CSRD scope threshold would rise to **>1,000 employees + €50M turnover or €25M balance sheet**. If adopted as proposed, the vast majority of listed SMEs will fall *out* of mandatory CSRD and into the voluntary VSME regime. The onboarding auto-detection logic accounts for this; listed SMEs are no longer unconditionally routed to CSRD-Full.
+> **Omnibus I (2025) note**: Under the proposed Omnibus simplification package, the CSRD scope threshold would rise to **>1,000 employees + €50M turnover or €25M balance sheet**. If adopted as proposed, the vast majority of listed SMEs will fall *out* of mandatory CSRD and into the voluntary VSME regime. The onboarding auto-detection logic accounts for this; listed SMEs are no longer unconditionally routed to CSRD.
 
 
 ### Platform Modes
 
-> **Naming note**: The official EFRAG VSME standard (published Dec 2024) defines two modules: **Basic Module (B1–B11)** and **Comprehensive Module (C1–C9)**. The codebase currently uses the legacy names `VSME-Lite` and `VSME-Full`. A P0 migration to align with the official `vsme_basic` / `vsme_comprehensive` / `csrd` enum is planned — see `features.md` §1.1.
+> **Naming note**: The official EFRAG VSME standard (published Dec 2024) defines two modules: **Basic Module (B1–B11)** and **Comprehensive Module (C1–C9)**. The codebase currently uses the legacy names `VSME Basic` and `VSME Comprehensive`. A P0 migration to align with the official `vsme_basic` / `vsme_comprehensive` / `csrd` enum is planned — see `features.md` §1.1.
 
 | Mode | Official EFRAG Equivalent | Description |
 |---|---|---|
-| **VSME-Lite** | VSME Basic Module (B1–B11) | Simplified ESG: basic climate, basic workforce, basic governance, simplified materiality. |
-| **VSME-Full** | VSME Comprehensive Module (C1–C9, additive to Basic) | Full voluntary SME standard: all E/S/G topics, simplified taxonomy. |
-| **CSRD-Full** | Full ESRS Set 1 | Full ESRS E1–E5, S1–S4, G1, double materiality, EU Taxonomy. For the small subset of SMEs still in mandatory CSRD scope post-Omnibus. |
+| **VSME Basic** | VSME Basic Module (B1–B11) | Simplified ESG: basic climate, basic workforce, basic governance, simplified materiality. |
+| **VSME Comprehensive** | VSME Comprehensive Module (C1–C9, additive to Basic) | Full voluntary SME standard: all E/S/G topics, simplified taxonomy. |
+| **CSRD** | Full ESRS Set 1 | Full ESRS E1–E5, S1–S4, G1, double materiality, EU Taxonomy. For the small subset of SMEs still in mandatory CSRD scope post-Omnibus. |
 
-**Target audience**: EU SMEs per Recommendation 2003/361/EC — micro (<10 employees, ≤ €2M turnover or ≤ €2M balance sheet), small (<50 employees, ≤ €10M turnover or ≤ €10M balance sheet), and medium (<250 employees, ≤ €50M turnover or ≤ €43M balance sheet). The platform is **VSME-first** — most SMEs use VSME-Lite or VSME-Full voluntarily. CSRD-Full mode serves the subset of listed SMEs and subsidiaries of large groups that remain in mandatory CSRD scope (subject to Omnibus I changes). The app auto-detects the SME's mode at onboarding and hides irrelevant complexity.
+**Target audience**: EU SMEs per Recommendation 2003/361/EC — micro (<10 employees, ≤ €2M turnover or ≤ €2M balance sheet), small (<50 employees, ≤ €10M turnover or ≤ €10M balance sheet), and medium (<250 employees, ≤ €50M turnover or ≤ €43M balance sheet). The platform is **VSME-first** — most SMEs use VSME Basic or VSME Comprehensive voluntarily. CSRD mode serves the subset of listed SMEs and subsidiaries of large groups that remain in mandatory CSRD scope (subject to Omnibus I changes). The app auto-detects the SME's mode at onboarding and hides irrelevant complexity.
 
 **Design philosophy**: Simplified for SME reality. No over-engineered assurance workflows — instead, audit-grade change history and evidence attachments. Qualitative/narrative disclosures use simple structured forms, not complex CMS tools. The datapoint taxonomy starts at the module level and becomes granular per-pillar as the platform matures.
 
-**Design principle**: The platform prioritises VSME-Lite and VSME-Full as the primary use cases for the majority of non-listed SMEs. CSRD-Full is served as a secondary mode for the minority of SMEs that remain in mandatory CSRD scope post-Omnibus I (listed SMEs above the revised threshold + subsidiaries of large groups). Where complexity can be reduced without breaking regulatory usefulness, it is reduced. The VSME "value-chain shield" workflow (see `features.md` §1.2) is a core commercial feature — enabling SMEs to push back on disproportionate ESG data requests from large counterparties.
+**Design principle**: The platform prioritises VSME Basic and VSME Comprehensive as the primary use cases for the majority of non-listed SMEs. CSRD is served as a secondary mode for the minority of SMEs that remain in mandatory CSRD scope post-Omnibus I (listed SMEs above the revised threshold + subsidiaries of large groups). Where complexity can be reduced without breaking regulatory usefulness, it is reduced. The VSME "value-chain shield" workflow (see `features.md` §1.2) is a core commercial feature — enabling SMEs to push back on disproportionate ESG data requests from large counterparties.
 
 **ESRS Topical Standards covered:**
 
@@ -193,7 +193,7 @@ The dashboard (`/dashboard`) is the authenticated hub. The sidebar adapts dynami
 
 **Module Visibility by Mode**
 
-| Module | VSME-Lite | VSME-Full | CSRD-Full |
+| Module | VSME Basic | VSME Comprehensive | CSRD |
 |---|---|---|---|
 | Climate (E1) | ✔ Basic | ✔ Full | ✔ Full |
 | Pollution (E2) | — | Optional | ✔ Required |
@@ -338,7 +338,7 @@ apps/api/
 | `report_snapshots` | All | Finalised ESG reports | `organization_id`, `reporting_period_id`, per-ESRS JSONB sections, `finalized_at` |
 | `import_jobs` | — | Import tracking | Status, file, rows processed |
 | `export_jobs` | — | Export tracking | Format, file path, status |
-| `feature_flag_subscriptions` | — | ESG module gating | `plan_type` (vsme_lite/vsme_full/csrd_full), per-module boolean flags, `expires_at` |
+| `feature_flag_subscriptions` | — | ESG module gating | `plan_type` (vsme_basic/vsme_comprehensive/csrd), per-module boolean flags, `expires_at` |
 
 
 
@@ -446,7 +446,7 @@ A lookup table that maps every ESRS datapoint to its data type, unit, mandatory 
 
 | Table | Purpose | Key Columns |
 |---|---|---|
-| `esrs_datapoints` | Central datapoint reference | `datapoint_id` (e.g. "E1-6_01"), `esrs_standard`, `paragraph_ref`, `topic`, `data_type` (numeric/boolean/narrative), `unit`, `mandatory_for` (vsme_lite/vsme_full/csrd_full), `is_active`, `version` |
+| `esrs_datapoints` | Central datapoint reference | `datapoint_id` (e.g. "E1-6_01"), `esrs_standard`, `paragraph_ref`, `topic`, `data_type` (numeric/boolean/narrative), `unit`, `mandatory_for` (vsme_basic/vsme_comprehensive/csrd), `is_active`, `version` |
 
 ### 3.13 Assurance & Change Tracking (Migration 12)
 
@@ -501,7 +501,7 @@ USING (
 
 | Pillar | Module | ESRS Ref | SME Applicability | Price Tier |
 |--------|--------|----------|-------------------|------------|
-| **E** | Climate — Energy & Emissions | E1-1 to E1-9 | **All SMEs** — required even in VSME-Lite | Free (Basic) |
+| **E** | Climate — Energy & Emissions | E1-1 to E1-9 | **All SMEs** — required even in VSME Basic | Free (Basic) |
 | **E** | Pollution | E2-1 to E2-6 | Medium SMEs, listed SMEs — optional for VSME | €99/mo |
 | **E** | Water & Marine Resources | E3-1 to E3-5 | Medium SMEs, listed SMEs — optional for VSME | €99/mo |
 | **E** | Biodiversity & Ecosystems | E4-1 to E4-6 | Medium SMEs, listed SMEs — optional for VSME | €99/mo |
@@ -512,7 +512,7 @@ USING (
 | **S** | Consumers & End-Users | S4-1 to S4-5 | Medium SMEs, listed SMEs — optional for VSME | €99/mo |
 | **G** | Business Conduct | G1-1 to G1-6 | **All SMEs** — simplified for VSME, full for CSRD | €99/mo |
 | **Cross** | Double Materiality | ESRS 1, IRO-1, IRO-2 | **All SMEs** — simplified for VSME, full for CSRD | Free |
-| **Cross** | EU Taxonomy | EU Tax. Reg. | Listed SMEs — optional for VSME-Full, hidden for VSME-Lite | €99/mo |
+| **Cross** | EU Taxonomy | EU Tax. Reg. | Listed SMEs — optional for VSME Comprehensive, hidden for VSME Basic | €99/mo |
 | **Cross** | Report Builder | ESRS 1–G1 | **All SMEs** — scope adapts to mode | Free (Basic) |
 
 ### 4.2 Feature Flag Mapping
@@ -521,7 +521,7 @@ Each module is gated by a boolean flag in `feature_flag_subscriptions`:
 
 ```typescript
 type EsgFeatureFlags = {
-  plan_type: 'vsme_lite' | 'vsme_full' | 'csrd_full';
+  plan_type: 'vsme_basic' | 'vsme_comprehensive' | 'csrd';
   // General Disclosures (ESRS 2)
   esrs2_enabled: true;                  // always free — mandatory baseline
   // Environmental
@@ -546,10 +546,10 @@ type EsgFeatureFlags = {
 
 ### 4.3 Plan Gating Logic (Updated for SME Modes)
 
-- **`vsme_lite`** → **VSME-Lite (Free)**: Climate (E1), Workforce (S1, basic), Governance (G1, basic), Simplified Materiality, Report Builder, ESRS 2 General Disclosures. Core feature flags: `climate_enabled`, `esrs2_enabled`, `materiality_enabled`, `report_builder_enabled` — all `true`
-- **`vsme_full`** → **VSME-Full (€99/mo)**: All Environmental (E1–E5) + All Social (S1–S4) + All Governance (G1) + Simplified Taxonomy. Feature flags for all E/S/G modules enabled
-- **`csrd_full`** → **CSRD-Full (€99/mo)**: All VSME-Full features + Full Double Materiality + Full EU Taxonomy + Expanded ESRS 2 narrative. `taxonomy_enabled = true`, all other module flags enabled
-- **Mode auto-detection**: Onboarding detects SME type (micro, small, medium, listed, subsidiary) and compliance drivers to assign the correct mode and provision feature flags accordingly. The `plan_type` enum stores `'vsme_lite' | 'vsme_full' | 'csrd_full'` in `feature_flag_subscriptions`
+- **`vsme_basic`** → **VSME Basic (Free)**: Climate (E1), Workforce (S1, basic), Governance (G1, basic), Simplified Materiality, Report Builder, ESRS 2 General Disclosures. Core feature flags: `climate_enabled`, `esrs2_enabled`, `materiality_enabled`, `report_builder_enabled` — all `true`
+- **`vsme_comprehensive`** → **VSME Comprehensive (€99/mo)**: All Environmental (E1–E5) + All Social (S1–S4) + All Governance (G1) + Simplified Taxonomy. Feature flags for all E/S/G modules enabled
+- **`csrd`** → **CSRD (€99/mo)**: All VSME Comprehensive features + Full Double Materiality + Full EU Taxonomy + Expanded ESRS 2 narrative. `taxonomy_enabled = true`, all other module flags enabled
+- **Mode auto-detection**: Onboarding detects SME type (micro, small, medium, listed, subsidiary) and compliance drivers to assign the correct mode and provision feature flags accordingly. The `plan_type` enum stores `'vsme_basic' | 'vsme_comprehensive' | 'csrd'` in `feature_flag_subscriptions`
 
 ---
 
@@ -628,6 +628,7 @@ type EsgFeatureFlags = {
 | 11 | ESRS datapoint taxonomy: 27 datapoints |
 | 12 | Assurance & change tracking |
 | 13 | Plan type enum update + 14 ESG feature flag columns |
+| 19 | Rename plan_type enum to EFRAG VSME: vsme_basic / vsme_comprehensive / csrd |
 | 14 | RLS recursion fix (SECURITY DEFINER helpers) |
 | 15 | Materiality RLS policies (INSERT/UPDATE/DELETE) |
 | 16 | SME classification columns on `organizations` |
@@ -663,12 +664,12 @@ type EsgFeatureFlags = {
         - Voluntary VSME reporting?
       → Determine: mandatory CSRD vs voluntary VSME vs counterparty-driven VSME
     → /onboarding (Step 3: ESG scope — select E/S/G pillars needed)
-      → /onboarding (Step 4: plan — Basic (VSME-Lite) vs Comprehensive (VSME-Full / CSRD-Full))
+      → /onboarding (Step 4: plan — Basic (VSME Basic) vs Comprehensive (VSME Comprehensive / CSRD))
         → Auto-assign mode using SME type + compliance driver:
-            - Micro/small non-listed → VSME-Lite (upgradable to VSME-Full)
-            - Medium non-listed → VSME-Full (upgradable to CSRD-Full if counterparty requires)
-            - Listed SMEs (in Omnibus scope) → CSRD-Full
-            - Listed SMEs (outside Omnibus scope) → VSME-Full (upgradable to CSRD-Full)
+            - Micro/small non-listed → VSME Basic (upgradable to VSME Comprehensive)
+            - Medium non-listed → VSME Comprehensive (upgradable to CSRD if counterparty requires)
+            - Listed SMEs (in Omnibus scope) → CSRD
+            - Listed SMEs (outside Omnibus scope) → VSME Comprehensive (upgradable to CSRD)
         → supabase.from("organizations").insert()
         → supabase.from("user_roles").insert()
         → supabase.from("feature_flag_subscriptions").insert()
@@ -677,7 +678,7 @@ type EsgFeatureFlags = {
 
 ### 6.2 ESRS 2 General Disclosures Flow (Narrative)
 
-**Mode**: Required in all modes — VSME-Lite, VSME-Full, and CSRD-Full.
+**Mode**: Required in all modes — VSME Basic, VSME Comprehensive, and CSRD.
 
 ```
 /dashboard/esg/narrative/
@@ -754,7 +755,7 @@ type EsgFeatureFlags = {
 
 ### 6.5 Double Materiality Assessment Flow (ESRS 1 / IRO-1)
 
-**VSME-Lite / VSME-Full** (simplified):
+**VSME Basic / VSME Comprehensive** (simplified):
 ```
 /dashboard/materiality
   → Step 1: Select pre-defined sector template
@@ -768,7 +769,7 @@ type EsgFeatureFlags = {
   → Display: simple checklist, datapoint coverage %
 ```
 
-**CSRD-Full** (full ESRS):
+**CSRD** (full ESRS):
 ```
 /dashboard/materiality
   → Step 1: Context — describe business model, value chain, stakeholder groups
@@ -787,7 +788,7 @@ type EsgFeatureFlags = {
 
 ### 6.6 EU Taxonomy Alignment Flow
 
-**Mode gating**: Mandatory for **CSRD-Full**, optional for **VSME-Full**, hidden for **VSME-Lite**.
+**Mode gating**: Mandatory for **CSRD**, optional for **VSME Comprehensive**, hidden for **VSME Basic**.
 
 ```
 /dashboard/taxonomy
@@ -1000,7 +1001,7 @@ POST   /admin/users/:id/approve
 7. **Immutable snapshots**: Once an ESG report is finalised (`finalized_at` set), the snapshot is append-only. This is critical for auditability and assurance.
 8. **Country-aware defaults**: Emission factors, social benchmarks, and governance norms vary by EU member state. All modules default to country-specific values where possible.
 9. **Supabase-first with planned API layer**: Current frontend queries Supabase directly (simpler for MVP). A Fastify/Prisma API layer will later abstract complex operations (report generation, taxonomy calculations, factor refresh jobs).
-10. **Simplified for SMEs**: The platform prioritises VSME-Lite and VSME-Full for the majority of non-listed SMEs. CSRD-Full serves a smaller subset (listed SMEs, subsidiaries). Where complexity can be removed without breaking regulatory usefulness, it is removed — no over-engineered assurance, simple narrative forms, progressive datapoint granularity.
+10. **Simplified for SMEs**: The platform prioritises VSME Basic and VSME Comprehensive for the majority of non-listed SMEs. CSRD serves a smaller subset (listed SMEs, subsidiaries). Where complexity can be removed without breaking regulatory usefulness, it is removed — no over-engineered assurance, simple narrative forms, progressive datapoint granularity.
 
 ---
 
@@ -1053,7 +1054,7 @@ The script creates:
 - A row in `user_profiles` (via the `on_auth_user_created` trigger)
 - An organization named "Demo Company Ltd." (DE, IT & Software, base year 2024)
 - Admin role with `is_primary = true` in `user_roles`
-- Feature flags with `csrd_full` plan in `feature_flag_subscriptions`
+- Feature flags with `csrd` plan in `feature_flag_subscriptions`
 
 After running, log in at `http://localhost:3000/login` with:
 - **Email**: `demo@carbontrackai.com`
@@ -1158,7 +1159,7 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 - **ESRS 2 narrative UI not yet built** — all 7 ESRS 2 tables exist in schema (Migration 10) but the narrative disclosure pages and forms are not yet implemented.
 - **Datapoint taxonomy seeded only at module level** — the `esrs_datapoints` table (Migration 11) exists with 27 high-level module references. Granular datapoint seeding per pillar is needed as modules are built out.
 - **Social & governance benchmarks vary by country** — unlike emission factors, social metrics (e.g. average training hours, gender pay gap) need country-specific benchmarks. Plan for a `social_benchmarks` and `governance_benchmarks` table.
-- **Feature flag gating not yet enforced** — `feature_flag_subscriptions` has 14 ESG module flags and the updated `plan_type` enum (`vsme_lite`/`vsme_full`/`csrd_full`), but the sidebar and dashboard don't dynamically hide modules based on the SME's plan.
+- **Feature flag gating not yet enforced** — `feature_flag_subscriptions` has 14 ESG module flags and the updated `plan_type` enum (`vsme_basic`/`vsme_comprehensive`/`csrd`), but the sidebar and dashboard don't dynamically hide modules based on the SME's plan.
 - **Database connection via pooler** — direct DNS (`db.<ref>.supabase.co`) fails on some networks (IPv6-only). Use the pooler at `aws-0-eu-west-1.pooler.supabase.com:6543` instead. See conversation context for credentials.
 - **pgBouncer transaction mode** — multi-statement SQL blocks can fail. Prefer individual statements or scripts when applying migrations manually.
 - **Migrations 14 & 15 must be applied manually via SQL Editor** — they cannot be pushed via `supabase db push` due to the pooler connection issue. Run the SQL from the migration files in the Supabase Dashboard SQL Editor.

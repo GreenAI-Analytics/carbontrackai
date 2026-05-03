@@ -124,7 +124,7 @@ export default function SettingsPage() {
 
   if (loading) return <div className="space-y-6 animate-pulse"><div className="h-6 w-48 rounded bg-gray-200" /><div className="h-64 rounded-xl bg-gray-100" /></div>;
 
-  const planLabel = flags?.plan_type === "vsme_lite" ? "VSME-Lite (Free)" : flags?.plan_type === "vsme_full" ? "VSME-Full (€99/mo)" : flags?.plan_type === "csrd_full" ? "CSRD-Full (€99/mo)" : flags?.plan_type ?? "Unknown";
+  const planLabel = flags?.plan_type === "vsme_basic" ? "VSME Basic (Free)" : flags?.plan_type === "vsme_comprehensive" ? "VSME Comprehensive (€99/mo)" : flags?.plan_type === "csrd" ? "CSRD (€99/mo)" : flags?.plan_type ?? "Unknown";
 
   return (
     <div className="space-y-6">
@@ -210,9 +210,9 @@ export default function SettingsPage() {
                   <p className="text-2xl font-bold text-gray-900">{planLabel}</p>
                 </div>
                 <div className="flex gap-2">
-                  {flags?.plan_type === "vsme_lite" && <button onClick={() => upgradePlan("vsme_full")} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to VSME-Full</button>}
-                  {flags?.plan_type === "vsme_full" && <button onClick={() => upgradePlan("csrd_full")} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to CSRD-Full</button>}
-                  {(flags?.plan_type === "vsme_full" || flags?.plan_type === "csrd_full") && <button onClick={() => upgradePlan("vsme_lite")} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Downgrade to VSME-Lite</button>}
+                  {flags?.plan_type === "vsme_basic" && <button onClick={() => upgradePlan("vsme_comprehensive")} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to VSME-Full</button>}
+                  {flags?.plan_type === "vsme_comprehensive" && <button onClick={() => upgradePlan("csrd")} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to CSRD-Full</button>}
+                  {(flags?.plan_type === "vsme_comprehensive" || flags?.plan_type === "csrd") && <button onClick={() => upgradePlan("vsme_basic")} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Downgrade to VSME-Lite</button>}
                 </div>
               </div>
             </div>
