@@ -12,9 +12,37 @@ type LatestCalc = {
   year: number;
 };
 
+async function saveInstrument(e: any) {
+    e.preventDefault();
+    setInstLoading(true);
+    const form = e.target;
+    const data = {
+      instrument_type: form.instType.value,
+      description: form.desc.value || null,
+      mwh_covered: parseFloat(form.mwh.value) || 0,
+      certificate_id: form.certId.value || null,
+      supplier: form.supplier.value || null,
+      country: form.country.value || null,
+      vintage_year: parseInt(form.vintage.value) || null,
+    };
+    await supabase.from("contractual_instruments").insert(data);
+    // Refresh
+    const { data: inst } = await supabase.from("contractual_instruments").select("*").eq("organization_id", (await supabase.auth.getUser()).data.user?.id ? (await supabase.from("user_roles").select("organization_id").eq("user_id", (await supabase.auth.getUser()).data.user!.id).single()).data?.organization_id : null);
+    if (inst) setInstruments(inst);
+    setInstLoading(false);
+    form.reset();
+  }
+
+  async function deleteInstrument(id: string) {
+    await supabase.from("contractual_instruments").delete().eq("id", id);
+    setInstruments(instruments.filter((i: any) => i.id !== id));
+  }
+
 export default function EnergyEmissionsPage() {
   const [latestCalc, setLatestCalc] = useState<LatestCalc | null>(null);
   const [activityCount, setActivityCount] = useState<number>(0);
+  const [instruments, setInstruments] = useState<any[]>([]);
+  const [instLoading, setInstLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,6 +84,9 @@ export default function EnergyEmissionsPage() {
         .eq("organization_id", orgId);
 
       setActivityCount(count ?? 0);
+      // Fetch contractual instruments
+      const { data: inst } = await supabase.from("contractual_instruments").select("*").eq("organization_id", orgId);
+      if (inst) setInstruments(inst);
       setLoading(false);
     }
     fetchData();
@@ -135,7 +166,37 @@ export default function EnergyEmissionsPage() {
         </div>
       )}
 
-      {!loading && !latestCalc && (
+      {/* Contractual Instruments for Market-Based Scope 2 */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Contractual Instruments (Scope 2 Market-Based)</h2>
+        <p className="text-sm text-gray-500 mb-4">Guarantees of Origin, PPAs, and RECs — used to calculate market-based Scope 2 emissions per GHG Protocol.</p>
+        
+        {instruments.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {instruments.map((inst: any) => (
+              <div key={inst.id} className="flex items-center justify-between border border-gray-100 rounded-lg p-3 text-sm">
+                <div>
+                  <span className="font-medium">{inst.instrument_type?.toUpperCase()}</span>
+                  <span className="text-gray-500 ml-2">{inst.mwh_covered} MWh</span>
+                  {inst.supplier && <span className="text-gray-400 ml-2">— {inst.supplier}</span>}
+                  {inst.country && <span className="text-gray-400 ml-2">({inst.country})</span>}
+                </div>
+                <button onClick={() => deleteInstrument(inst.id)} className="text-red-400 hover:text-red-600 text-xs">Remove</button>
+              </div>
+            ))}
+            <p className="text-xs text-gray-500">Total certificated: <strong>{instruments.reduce((s: number, i: any) => s + (i.mwh_covered || 0), 0).toFixed(1)} MWh</strong></p>
+          </div>
+        )}
+
+        <form onSubmit={saveInstrument} className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+          <div><label className="mb-1 block text-xs font-medium text-gray-600">Type</label><select name="instType" defaultValue="goo" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"><option value="goo">Guarantee of Origin</option><option value="ppa">PPA</option><option value="rec">REC</option><option value="other">Other</option></select></div>
+          <div><label className="mb-1 block text-xs font-medium text-gray-600">MWh covered</label><input name="mwh" type="number" min="0" step="0.1" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+          <div><label className="mb-1 block text-xs font-medium text-gray-600">Supplier</label><input name="supplier" type="text" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="e.g. Vattenfall" /></div>
+          <button type="submit" disabled={instLoading} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50">{instLoading ? "Adding…" : "+ Add"}</button>
+        </form>
+      </div>
+
+            {!loading && !latestCalc && (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
           <div className="text-5xl mb-4">🌱</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No emissions data yet</h2>

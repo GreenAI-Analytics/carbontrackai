@@ -10,6 +10,7 @@ import {
   BreakdownItem,
   CalculationResult,
   calculateEmissions,
+  calculateMarketBasedScope2,
   formatMWh,
   formatTco2e,
 } from "@/lib/calculations";
@@ -30,6 +31,7 @@ type SavedRun = {
 type DisplayData = {
   scope1: number;
   scope2: number;
+  scope2Market: number | null;
   totalMWh: number;
   breakdown: BreakdownItem[];
   calculatedAt: string;
@@ -45,7 +47,8 @@ export default function EmissionsPage() {
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
 
   const [calcResult, setCalcResult] = useState<CalculationResult | null>(null);
-  const [savedRuns, setSavedRuns] = useState<SavedRun[]>([]);
+  const [scope2Market, setScope2Market] = useState<number | null>(null);
+    const [savedRuns, setSavedRuns] = useState<SavedRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,6 +186,38 @@ export default function EmissionsPage() {
       { onConflict: "organization_id,reporting_period_id,scope_type" }
     );
 
+    // 5. Calculate market-based Scope 2 if contractual instruments exist
+    const { data: instruments } = await supabase
+      .from("contractual_instruments")
+      .select("instrument_type, mwh_covered, supplier, country")
+      .eq("organization_id", orgId)
+      .eq("reporting_period_id", selectedPeriodId);
+
+    if (instruments && instruments.length > 0) {
+      const electricityMWh = result.breakdown
+        .filter((b) => b.activityType === "electricity")
+        .reduce((s, b) => s + b.energyMWh, 0);
+
+      const marketResult = calculateMarketBasedScope2(
+        electricityMWh,
+        instruments as Array<{ instrument_type: string; mwh_covered: number; supplier?: string | null; country?: string | null }>,
+        countryCode
+      );
+
+      setScope2Market(marketResult.scope2MarketTco2e);
+      
+      await supabase.from("calculation_runs").upsert({
+        organization_id: orgId,
+        reporting_period_id: selectedPeriodId,
+        scope_type: "scope_2_market",
+        total_emissions: marketResult.scope2MarketTco2e,
+        total_energy: electricityMWh,
+        factor_versions: { generated_at: new Date().toISOString(), country: countryCode, certificated_mwh: marketResult.certificatedMWh },
+      }, { onConflict: "organization_id,reporting_period_id,scope_type" });
+    } else {
+      setScope2Market(null);
+          }
+
     await loadSavedRuns(selectedPeriodId);
     setCalculating(false);
   }
@@ -192,6 +227,7 @@ export default function EmissionsPage() {
     ? {
         scope1: calcResult.scope1Tco2e,
         scope2: calcResult.scope2LocationTco2e,
+        scope2Market: scope2Market,
         totalMWh: calcResult.totalMWh,
         breakdown: calcResult.breakdown,
         calculatedAt: new Date().toISOString(),
@@ -200,6 +236,7 @@ export default function EmissionsPage() {
     ? {
         scope1: savedRuns.find((r) => r.scope_type === "scope_1")?.total_emissions ?? 0,
         scope2: savedRuns.find((r) => r.scope_type === "scope_2_location")?.total_emissions ?? 0,
+        scope2Market: savedRuns.find((r) => r.scope_type === "scope_2_market")?.total_emissions ?? null,
         totalMWh: savedRuns.find((r) => r.scope_type === "scope_1")?.total_energy ?? 0,
         breakdown: [
           ...(savedRuns.find((r) => r.scope_type === "scope_1")?.breakdown ?? []),

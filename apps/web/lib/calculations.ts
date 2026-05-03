@@ -76,6 +76,66 @@ export const FALLBACK_FACTORS: Record<ActivityType, number> = {
   diesel_car_fuel: 2.68, // kg CO₂e / L (tank-to-wheel)
 };
 
+// ─── Residual Mix Factors (AIB European Residual Mix 2023, kg CO₂e/kWh) ───
+// Source: Association of Issuing Bodies (AIB) — used for market-based Scope 2
+// when contractual instruments do not cover 100% of electricity consumption.
+export const RESIDUAL_MIX_FACTORS: Record<string, number> = {
+  AT: 0.185, BE: 0.185, BG: 0.520, HR: 0.350, CY: 0.670, CZ: 0.510,
+  DK: 0.210, EE: 0.730, FI: 0.180, FR: 0.076, DE: 0.420, GR: 0.580,
+  HU: 0.310, IE: 0.410, IT: 0.330, LV: 0.230, LT: 0.200, LU: 0.350,
+  MT: 0.530, NL: 0.340, PL: 0.680, PT: 0.310, RO: 0.420, SK: 0.210,
+  SI: 0.310, ES: 0.280, SE: 0.025,
+};
+
+export const EU_RESIDUAL_MIX_DEFAULT = 0.350; // kg CO₂e/kWh — conservative EU average
+
+// ─── Contractual instrument types ───
+
+export interface ContractualInstrument {
+  instrument_type: string;
+  mwh_covered: number;
+  supplier?: string | null;
+  country?: string | null;
+}
+
+// ─── Market-based Scope 2 ───
+
+/**
+ * Calculate market-based Scope 2 emissions.
+ * Market-based = (consumption − certificated MWh) × residual-mix factor
+ *               + certificated MWh × supplier-specific factor (or 0 for renewables)
+ */
+export function calculateMarketBasedScope2(
+  totalElectricityMWh: number,
+  instruments: ContractualInstrument[],
+  countryCode: string
+): { scope2MarketTco2e: number; certificatedMWh: number; residualMWh: number } {
+  const certificatedMWh = instruments.reduce((s, i) => s + i.mwh_covered, 0);
+  const residualMWh = Math.max(0, totalElectricityMWh - certificatedMWh);
+  const residualFactor = RESIDUAL_MIX_FACTORS[countryCode] ?? EU_RESIDUAL_MIX_DEFAULT;
+
+  // Certificated MWh: assume 0 kg CO2e for GoOs/RECs (renewable), use supplier factor for PPAs
+  let certificatedEmissions = 0;
+  for (const inst of instruments) {
+    if (inst.instrument_type === "ppa") {
+      // PPAs may have a disclosed emission factor; default to grid average if not specified
+      const ppaFactor = RESIDUAL_MIX_FACTORS[inst.country ?? countryCode] ?? EU_RESIDUAL_MIX_DEFAULT;
+      certificatedEmissions += inst.mwh_covered * ppaFactor * 0.1; // PPAs typically lower-carbon
+    }
+    // GoOs and RECs = zero emissions (renewable)
+  }
+
+  const residualEmissionsKg = residualMWh * 1000 * residualFactor;
+  const certificatedEmissionsKg = certificatedEmissions; // PPA emissions included, GoOs/RECs = 0
+  const totalKg = residualEmissionsKg + certificatedEmissionsKg;
+
+  return {
+    scope2MarketTco2e: totalKg / 1000,
+    certificatedMWh,
+    residualMWh,
+  };
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type ActivityRecord = {
