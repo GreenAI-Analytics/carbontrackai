@@ -17,6 +17,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [countryInfo, setCountryInfo] = useState<any>(null);
   const [view, setView] = useState<"build" | "snapshots">("build");
 
   const load = async () => {
@@ -82,6 +83,12 @@ export default function ReportsPage() {
     ]);
 
     const year = periods.find((p) => p.id === pid)?.year ?? new Date().getFullYear();
+
+    // Fetch country overlay for the org country
+    if (org?.data?.country_code) {
+      const { data: overlay } = await supabase.from("country_overlays").select("*").eq("iso_code", org.data.country_code).single();
+      if (overlay) setCountryInfo(overlay);
+    }
 
     const data = {
       meta: {

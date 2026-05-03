@@ -56,6 +56,7 @@ export default function SettingsPage() {
   const [turnover, setTurnover] = useState("");
   const [balanceSheet, setBalanceSheet] = useState("");
   const [consolidation, setConsolidation] = useState("");
+  const [countryOverlays, setCountryOverlays] = useState<any[]>([]);
 
   const load = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -82,6 +83,8 @@ export default function SettingsPage() {
       setConsolidation(orgData.consolidation_approach ?? "");
     }
     if (flagData) setFlags(flagData);
+    const { data: overlays } = await supabase.from("country_overlays").select("iso_code,country_name,filing_portal_name,filing_portal_url,filing_language,national_factor_source,labour_reporting_standard,official_languages,requires_local_language,csrd_transposition_law").in("iso_code", orgData?.countries_of_operation || [orgData?.country_code]);
+    if (overlays) setCountryOverlays(overlays);
     if (members?.length) {
       const enriched = await Promise.all(members.map(async (m: any) => {
         const { data: { user: u } } = await supabase.auth.admin?.getUserById(m.user_id);
@@ -135,7 +138,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex border-b border-gray-200 gap-1">
-        {[["profile","🏢 Profile"],["plan","💳 Plan"],["team","👥 Team"],["danger","⚠️ Danger Zone"]].map(([t,l]) => (
+        {[["profile","🏢 Profile"],["plan","💳 Plan"],["countries","🌍 Countries"],["team","👥 Team"],["danger","⚠️ Danger Zone"]].map(([t,l]) => (
           <button key={t} type="button" onClick={() => setTab(t as any)} className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition ${tab===t?"bg-white text-primary-700 border border-b-white -mb-px border-gray-200":"text-gray-500 hover:text-gray-700"}`}>{l}</button>
         ))}
         <div className="flex-1 border-b border-gray-200" />
@@ -246,6 +249,51 @@ export default function SettingsPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Country Overlays */}
+        {tab === "countries" && (
+          <div className="space-y-6">
+            <div><h2 className="text-lg font-semibold text-gray-900">Country Regulatory Overlays</h2><p className="text-sm text-gray-500">Per-country filing portals, emission factor authorities, labour law extensions, and language requirements for your countries of operation.</p></div>
+            {countryOverlays.length === 0 ? (
+              <p className="text-gray-400 py-8 text-center">No country overlays available for your countries of operation. These are pre-configured for EU member states.</p>
+            ) : (
+              <div className="space-y-4">
+                {countryOverlays.map((co: any) => (
+                  <div key={co.iso_code} className="border border-gray-200 rounded-xl p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">{co.country_name} ({co.iso_code})</h3>
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">{co.filing_language?.toUpperCase()}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Filing Portal</p>
+                        <p className="font-medium">{co.filing_portal_name || "—"}</p>
+                        {co.filing_portal_url && <a href={co.filing_portal_url} target="_blank" className="text-primary-600 text-xs hover:text-primary-700">{co.filing_portal_url}</a>}
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Emission Factor Authority</p>
+                        <p className="font-medium">{co.national_factor_source || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Labour Law Extension</p>
+                        <p className="font-medium">{co.labour_reporting_standard || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">CSRD Transposition</p>
+                        <p className="font-medium">{co.csrd_transposition_law || "—"}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 text-xs text-gray-400">
+                      <span>Languages: {co.official_languages?.join(", ")?.toUpperCase()}</span>
+                      <span>·</span>
+                      <span>Local language required: {co.requires_local_language ? "Yes" : "No"}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
