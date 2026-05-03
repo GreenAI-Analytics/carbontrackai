@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
+import { detectGreenwash, getGreenwashWarning } from "@/lib/greenwashing";
 
 type GovRole = { roleName: string; responsibility: string; body: string; frequency: string };
 type Stakeholder = { group: string; purpose: string; frequency: string; topics: string; feedback: string };
@@ -127,6 +128,7 @@ export default function GovernanceStrategyPage() {
           <div className="space-y-4">
             <Section title="Business Model & Strategy" desc="Describe your business model, value chain, sectors, and geographies per ESRS 2 SBM-1.">
               <Textarea label="Narrative description" value={narrative} onChange={setNarrative} rows={6} placeholder="Describe your organisation's business model, key products/services, markets served, and how sustainability is embedded in strategy..." />
+              {(() => { const flags = detectGreenwash(narrative); if (flags.length === 0) return null; const warning = getGreenwashWarning(flags); return warning ? <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"><strong>Green Claims Directive:</strong> {warning}</div> : null; })()}
               <Textarea label="Value chain stages" value={valueChain} onChange={setValueChain} rows={3} placeholder="Upstream (suppliers, raw materials) → Own operations → Downstream (distribution, customers, end-of-life)..." />
               <div className="grid grid-cols-3 gap-4">
                 <Field label="Key sectors (NACE)" value={keySectors} onChange={setKeySectors} placeholder="e.g. C25, F41" />
