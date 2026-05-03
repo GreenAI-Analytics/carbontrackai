@@ -12,11 +12,18 @@ type LatestCalc = {
   year: number;
 };
 
-async function saveInstrument(e: any) {
+export default function EnergyEmissionsPage() {
+  const [latestCalc, setLatestCalc] = useState<LatestCalc | null>(null);
+  const [activityCount, setActivityCount] = useState<number>(0);
+  const [instruments, setInstruments] = useState<any[]>([]);
+  const [instLoading, setInstLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  async function saveInstrument(e: any) {
     e.preventDefault();
     setInstLoading(true);
     const form = e.target;
-    const data = {
+    await supabase.from("contractual_instruments").insert({
       instrument_type: form.instType.value,
       description: form.desc.value || null,
       mwh_covered: parseFloat(form.mwh.value) || 0,
@@ -24,10 +31,9 @@ async function saveInstrument(e: any) {
       supplier: form.supplier.value || null,
       country: form.country.value || null,
       vintage_year: parseInt(form.vintage.value) || null,
-    };
-    await supabase.from("contractual_instruments").insert(data);
-    // Refresh
-    const { data: inst } = await supabase.from("contractual_instruments").select("*").eq("organization_id", (await supabase.auth.getUser()).data.user?.id ? (await supabase.from("user_roles").select("organization_id").eq("user_id", (await supabase.auth.getUser()).data.user!.id).single()).data?.organization_id : null);
+    });
+    // Refresh list
+    const { data: inst } = await supabase.from("contractual_instruments").select("*").eq("organization_id", (await supabase.from("user_roles").select("organization_id").eq("user_id", (await supabase.auth.getUser()).data.user!.id).single()).data?.organization_id);
     if (inst) setInstruments(inst);
     setInstLoading(false);
     form.reset();
@@ -37,13 +43,6 @@ async function saveInstrument(e: any) {
     await supabase.from("contractual_instruments").delete().eq("id", id);
     setInstruments(instruments.filter((i: any) => i.id !== id));
   }
-
-export default function EnergyEmissionsPage() {
-  const [latestCalc, setLatestCalc] = useState<LatestCalc | null>(null);
-  const [activityCount, setActivityCount] = useState<number>(0);
-  const [instruments, setInstruments] = useState<any[]>([]);
-  const [instLoading, setInstLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {

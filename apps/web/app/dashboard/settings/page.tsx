@@ -40,7 +40,7 @@ export default function SettingsPage() {
   const [org, setOrg] = useState<OrgData | null>(null);
   const [flags, setFlags] = useState<FeatureFlags | null>(null);
   const [team, setTeam] = useState<TeamMember[]>([]);
-  const [tab, setTab] = useState<"profile" | "plan" | "team" | "danger">("profile");
+  const [tab, setTab] = useState<"profile" | "plan" | "countries" | "team" | "danger">("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);

@@ -85,57 +85,57 @@ export default function ReportsPage() {
     const year = periods.find((p) => p.id === pid)?.year ?? new Date().getFullYear();
 
     // Fetch country overlay for the org country
-    if (org?.data?.country_code) {
-      const { data: overlay } = await supabase.from("country_overlays").select("*").eq("iso_code", org.data.country_code).single();
+    if (org?.country_code) {
+      const { data: overlay } = await supabase.from("country_overlays").select("*").eq("iso_code", org.country_code).single();
       if (overlay) setCountryInfo(overlay);
     }
 
     const data = {
       meta: {
-        organization: org?.data?.name ?? "Unknown",
-        country: org?.data?.country_code ?? "",
-        sector: org?.data?.sector ?? "",
-        smeCategory: org?.data?.sme_category ?? "",
-        headcount: org?.data?.headcount ?? null,
+        organization: org?.name ?? "Unknown",
+        country: org?.country_code ?? "",
+        sector: org?.sector ?? "",
+        smeCategory: org?.sme_category ?? "",
+        headcount: org?.headcount ?? null,
         reportingYear: year,
         generatedAt: new Date().toISOString(),
         mode: "VSME / CSRD",
       },
       environmental: {
         climate: {
-          calculations: calc?.data?.length ? { scope1_tco2e: calc.data[0].scope1, scope2_tco2e: calc.data[0].scope2, total_mwh: calc.data[0].totalMWh } : null,
-          activityRecords: act?.data?.length ?? 0,
+          calculations: calc?.length ? { scope1_tco2e: calc[0].scope1, scope2_tco2e: calc[0].scope2, total_mwh: calc[0].totalMWh } : null,
+          activityRecords: act?.length ?? 0,
         },
-        pollution: { pollutants: poll?.data?.length ?? 0 },
-        water: { consumptionSources: waterC?.data?.length ?? 0, dischargeRecords: waterD?.data?.length ?? 0 },
-        biodiversity: { sites: bio?.data?.length ?? 0, nearProtected: bio?.data?.filter((s: any) => s.near_protected_area).length ?? 0 },
-        circularEconomy: { materialTypes: mat?.data?.length ?? 0, wasteTypes: waste?.data?.length ?? 0 },
+        pollution: { pollutants: poll?.length ?? 0 },
+        water: { consumptionSources: waterC?.length ?? 0, dischargeRecords: waterD?.length ?? 0 },
+        biodiversity: { sites: bio?.length ?? 0, nearProtected: bio?.filter((s: any) => s.near_protected_area).length ?? 0 },
+        circularEconomy: { materialTypes: mat?.length ?? 0, wasteTypes: waste?.length ?? 0 },
       },
       social: {
         workforce: {
-          headcount: hc?.data?.total_employees ?? 0,
-          turnover: to?.data ? { hires: to.data.hires, leavers: to.data.leavers, voluntaryLeavers: to.data.voluntary_leavers } : null,
-          healthSafety: hse?.data ? { injuries: hse.data.recordable_injuries, lostDays: hse.data.lost_days } : null,
-          training: tr?.data ? { totalHours: tr.data.total_training_hours, avgPerEmployee: hc?.data?.total_employees ? ((tr.data.total_training_hours || 0) / hc.data.total_employees).toFixed(1) : 0 } : null,
-          payGap: pg?.data ? { mean: pg.data.mean_gap_percentage, median: pg.data.median_gap_percentage } : null,
+          headcount: hc?.total_employees ?? 0,
+          turnover: to ? { hires: to.hires, leavers: to.leavers, voluntaryLeavers: to.voluntary_leavers } : null,
+          healthSafety: hse ? { injuries: hse.recordable_injuries, lostDays: hse.lost_days } : null,
+          training: tr ? { totalHours: tr.total_training_hours, avgPerEmployee: hc?.total_employees ? ((tr.total_training_hours || 0) / hc.total_employees).toFixed(1) : 0 } : null,
+          payGap: pg ? { mean: pg.mean_gap_percentage, median: pg.median_gap_percentage } : null,
         },
       },
       governance: {
-        board: board?.data ? { size: board.data.board_size, independentMembers: board.data.independent_members, womenOnBoard: board.data.female_members } : null,
-        ethicsTraining: eth?.data?.length ?? 0,
-        complianceIncidents: comp?.data?.length ?? 0,
-        dataBreaches: breaches?.data?.length ?? 0,
-        whistleblower: wb?.data ? { reports: wb.data.reports_received, substantiated: wb.data.cases_substantiated } : null,
-        supplierAssessments: sc?.data?.length ?? 0,
-        politicalContributions: pc?.data?.length ?? 0,
+        board: board ? { size: board.board_size, independentMembers: board.independent_members, womenOnBoard: board.female_members } : null,
+        ethicsTraining: eth?.length ?? 0,
+        complianceIncidents: comp?.length ?? 0,
+        dataBreaches: breaches?.length ?? 0,
+        whistleblower: wb ? { reports: wb.reports_received, substantiated: wb.cases_substantiated } : null,
+        supplierAssessments: sc?.length ?? 0,
+        politicalContributions: pc?.length ?? 0,
       },
       crossCutting: {
-        materiality: { irosAssessed: mat_iro?.data?.length ?? 0 },
-        taxonomy: { activitiesAssessed: tax?.data?.length ?? 0 },
+        materiality: { irosAssessed: mat_iro?.length ?? 0 },
+        taxonomy: { activitiesAssessed: tax?.length ?? 0 },
         esrs2: {
-          strategy: sbm?.data?.narrative_description ? true : false,
-          policies: pols?.data?.length ?? 0,
-          dueDiligence: dd?.data?.length ?? 0,
+          strategy: sbm?.narrative_description ? true : false,
+          policies: pols?.length ?? 0,
+          dueDiligence: dd?.length ?? 0,
         },
       },
     };
