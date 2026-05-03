@@ -47,7 +47,7 @@ const ESG_PILLARS: EsgPillar[] = [
     bgColor: "bg-emerald-50",
     borderColor: "border-emerald-200",
     modules: 5,
-    modulesCompleted: 1, // Climate (E1) is partially implemented
+    modulesCompleted: 5, // All E1-E5 implemented
     description: "Climate, Pollution, Water, Biodiversity, Circular Economy",
     href: "/dashboard/esg/environmental/climate",
   },
@@ -59,7 +59,7 @@ const ESG_PILLARS: EsgPillar[] = [
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
     modules: 4,
-    modulesCompleted: 1, // Own Workforce (S1) implemented
+    modulesCompleted: 4, // All S1-S4 implemented
     description: "Workforce, Value Chain, Communities, Consumers",
     href: "/dashboard/esg/social/workforce",
   },
