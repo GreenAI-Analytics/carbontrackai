@@ -289,3 +289,22 @@ export function metricColour(
   if (value >= thresholds.amber) return "amber";
   return "red";
 }
+// --- GDPR k-Anonymity ---
+
+const K_ANONYMITY_THRESHOLD = 10;
+
+/**
+ * Apply k-anonymity suppression per GDPR Art. 9.
+ * Suppresses counts below threshold to prevent re-identification.
+ */
+export function applyKAnonymity(value: number): { display: string; suppressed: boolean } {
+  if (value > 0 && value < K_ANONYMITY_THRESHOLD) {
+    return { display: "<" + K_ANONYMITY_THRESHOLD, suppressed: true };
+  }
+  return { display: String(value), suppressed: false };
+}
+
+export function isSuppressed(value: number): boolean {
+  return value > 0 && value < K_ANONYMITY_THRESHOLD;
+}
+
