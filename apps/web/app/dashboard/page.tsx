@@ -83,7 +83,7 @@ const ESG_PILLARS: EsgPillar[] = [
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
     modules: 3,
-    modulesCompleted: 2, // EU Taxonomy + ESRS 2
+    modulesCompleted: 3, // All cross-cutting implemented
     description: "Materiality, EU Taxonomy, Report Builder",
     href: "/dashboard/materiality",
   },
