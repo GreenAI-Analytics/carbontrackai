@@ -49,6 +49,7 @@ export default function EmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [factorFreshness, setFactorFreshness] = useState<{ provider: string; updated: string } | null>(null);
 
   const loadSavedRuns = useCallback(async (periodId: string) => {
     const { data } = await supabase
@@ -97,6 +98,10 @@ export default function EmissionsPage() {
         setSelectedPeriodId(latest.id);
         await loadSavedRuns(latest.id);
       }
+
+      // Check factor freshness
+      const { data: src } = await supabase.from("factor_sources").select("name,last_updated").eq("provider","climatiq").maybeSingle();
+      if (src) setFactorFreshness({ provider: src.name, updated: src.last_updated });
 
       setLoading(false);
     }
@@ -227,6 +232,13 @@ export default function EmissionsPage() {
       </div>
 
       {/* Year selector */}
+      {factorFreshness && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 flex items-center gap-2">
+          <span>📅</span>
+          <span>Emission factors from <strong>{factorFreshness.provider}</strong> updated {new Date(factorFreshness.updated).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm font-medium text-gray-700">Reporting year:</span>
         {periods.length === 0 ? (

@@ -178,7 +178,20 @@ export default function SettingsPage() {
               </select>
             </div>
 
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+            <hr className="border-gray-200" />
+            <div><h3 className="text-base font-semibold text-gray-900">Emission Factor Data Sources</h3><p className="text-sm text-gray-500">Refresh country-specific emission factors from the Climatiq API. Requires CLIMATIQ_API_KEY in environment.</p></div>
+            <button type="button" onClick={async () => {
+              setSaving(true);
+              try {
+                const res = await fetch("/api/refresh-factors");
+                const data = await res.json();
+                if (data.errors?.length) alert("Refresh completed with errors: " + data.errors.join(", "));
+                else alert("Refreshed " + data.factorsInserted + " factors from " + (data.countries?.length || 0) + " countries in " + (data.durationMs / 1000).toFixed(1) + "s");
+              } catch (err) { alert("Failed: " + (err as any).message); }
+              finally { setSaving(false); }
+            }} disabled={saving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">🔄 Refresh from Climatiq</button>
+
+                        <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
               <button type="submit" disabled={saving} className="rounded-lg bg-primary-600 px-6 py-2.5 font-semibold text-white hover:bg-primary-700 disabled:opacity-60">{saving?"Saving…":"Save changes"}</button>
               {saved && <span className="text-sm text-emerald-600 font-medium">✓ Saved</span>}
             </div>
