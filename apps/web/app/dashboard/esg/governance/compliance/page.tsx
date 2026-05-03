@@ -15,6 +15,7 @@ export default function CompliancePage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [wb, setWb] = useState<Whistleblower>({ reports: "", investigated: "", substantiated: "", remediation: "" });
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+  const [individualCases, setIndividualCases] = useState<Array<{ case_reference: string; report_type: string; case_status: string; submitted_at: string; acknowledged_at: string | null; feedback_deadline: string | null; description: string | null }>>([]);
   const [tab, setTab] = useState<"incidents" | "whistleblower" | "deadlines">("incidents");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,15 +33,17 @@ export default function CompliancePage() {
     setPeriodId(p?.id ?? null);
     const pid = p?.id;
 
-    const [inc, wbData, nd] = await Promise.all([
+    const [inc, wbData, nd, indivCases] = await Promise.all([
       supabase.from("compliance_incidents").select("*").eq("organization_id", oid).eq("reporting_period_id", pid),
       supabase.from("whistleblower_cases").select("*").eq("organization_id", oid).eq("reporting_period_id", pid).single(),
       supabase.from("narrative_disclosures").select("*").eq("organization_id", oid).eq("reporting_period_id", pid).eq("disclosure_type", "regulatory_deadline"),
+      supabase.from("whistleblower_cases").select("case_reference,report_type,case_status,submitted_at,acknowledged_at,feedback_deadline,description").eq("organization_id", oid).not("case_reference", "is", null).order("submitted_at", { ascending: false }).limit(20),
     ]);
 
     if (inc.data?.length) setIncidents(inc.data.map((x: any) => ({ id: x.id, itype: x.incident_type ?? "", desc: x.description ?? "", fines: String(x.regulatory_fines ?? ""), sanctions: String(x.non_monetary_sanctions ?? ""), legal: String(x.legal_actions ?? "") })));
     if (wbData.data) setWb({ reports: String(wbData.data.reports_received ?? ""), investigated: String(wbData.data.cases_investigated ?? ""), substantiated: String(wbData.data.cases_substantiated ?? ""), remediation: wbData.data.remediation_actions ?? "" });
     if (nd.data?.length) setDeadlines(nd.data.map((x: any) => ({ title: x.esrs_datapoint_ref ?? "", date: x.narrative_text ?? "", authority: "", status: "pending" })));
+    if (indivCases.data?.length) setIndividualCases(indivCases.data as any[]);
 
     setLoading(false);
   };
@@ -77,7 +80,6 @@ export default function CompliancePage() {
   const totalFines = incidents.reduce((s, i) => s + (parseFloat(i.fines) || 0), 0);
   const totalLegal = incidents.reduce((s, i) => s + (parseInt(i.legal) || 0), 0);
   const wbSubstantiation = parseInt(wb.investigated) > 0 ? ((parseInt(wb.substantiated) || 0) / parseInt(wb.investigated) * 100).toFixed(1) : "0.0";
-
   return (
     <div className="space-y-6">
       <div>
@@ -178,7 +180,46 @@ export default function CompliancePage() {
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+        <hr className="border-gray-200" />
+
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Individual Case Register</h2>
+              <p className="text-sm text-gray-500">Cases submitted via the whistleblower channel at <a href="/whistleblower" className="text-primary-600 hover:text-primary-700" target="_blank">/whistleblower</a>. Case status, deadlines, and timer tracking.</p>
+            </div>
+
+            {individualCases.length === 0 ? (
+              <p className="text-gray-400 py-4 text-center text-sm">No individual cases submitted yet. Share the <a href="/whistleblower" className="text-primary-600 hover:text-primary-700" target="_blank">whistleblower form link</a> with your organisation.</p>
+            ) : (
+              <div className="space-y-2">
+                {individualCases.map((cs, i) => {
+                  const isOverdue = cs.feedback_deadline && new Date(cs.feedback_deadline) < new Date();
+                  const needsAck = cs.case_status === "pending" && cs.submitted_at && (new Date().getTime() - new Date(cs.submitted_at).getTime()) > 7 * 86400000;
+                  return (
+                    <div key={i} className="border border-gray-100 rounded-lg p-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-mono font-medium text-gray-900">{cs.case_reference}</span>
+                          <span className="text-gray-500 ml-2">{cs.report_type}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={"text-xs px-2 py-0.5 rounded-full " + (cs.case_status === "pending" ? "bg-yellow-100 text-yellow-700" : cs.case_status === "acknowledged" ? "bg-blue-100 text-blue-700" : cs.case_status === "investigating" ? "bg-purple-100 text-purple-700" : cs.case_status === "substantiated" ? "bg-red-100 text-red-700" : cs.case_status === "resolved" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600")}>{cs.case_status}</span>
+                          {needsAck && <span className="text-xs text-red-600 font-medium">⚠ 7d exceeded</span>}
+                          {isOverdue && <span className="text-xs text-red-600 font-medium">⚠ Overdue</span>}
+                        </div>
+                      </div>
+                      {cs.description && <p className="text-gray-600 mt-1 text-xs line-clamp-2">{cs.description}</p>}
+                      <div className="flex gap-4 mt-1 text-xs text-gray-400">
+                        <span>Submitted: {cs.submitted_at ? new Date(cs.submitted_at).toLocaleDateString("en-GB") : "—"}</span>
+                        <span>Ack deadline: {cs.submitted_at ? new Date(new Date(cs.submitted_at).getTime() + 7*86400000).toLocaleDateString("en-GB") : "—"}</span>
+                        <span>Feedback by: {cs.feedback_deadline ? new Date(cs.feedback_deadline).toLocaleDateString("en-GB") : "—"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
           <button type="submit" disabled={saving} className="rounded-lg bg-primary-600 px-6 py-2.5 font-semibold text-white transition hover:bg-primary-700 disabled:opacity-60">{saving ? "Saving…" : "Save all"}</button>
           {saved && <span className="text-sm text-emerald-600 font-medium">✓ Saved</span>}
         </div>
