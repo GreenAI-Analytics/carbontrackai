@@ -181,7 +181,7 @@ export default function AssessmentDetailPage() {
     const updated = { ...iroForm, [field]: value };
 
     // Recompute scores when severity or likelihood changes
-    if (field === "severity_scale" || field === "likelihood_scale" || field === "iro_type" || field === "direction") {
+    if (field === "severity_scale" || field === "likelihood_scale" || field === "scale_score" || field === "scope_score" || field === "irremediability_score" || field === "likelihood_score" || field === "magnitude_score" || field === "financial_likelihood_score" || field === "iro_type" || field === "direction") {
       const scores = computeIroScores(updated);
       updated.impact_materiality_score = scores.impact_materiality_score;
       updated.financial_materiality_score = scores.financial_materiality_score;
@@ -205,6 +205,16 @@ export default function AssessmentDetailPage() {
       description: iroForm.description || null,
       severity_scale: iroForm.severity_scale ?? 3,
       likelihood_scale: iroForm.likelihood_scale ?? 3,
+      scale_score: iroForm.scale_score ?? iroForm.severity_scale ?? 3,
+      scope_score: iroForm.scope_score ?? 3,
+      irremediability_score: iroForm.irremediability_score ?? 3,
+      likelihood_score: iroForm.likelihood_score ?? iroForm.likelihood_scale ?? 3,
+      magnitude_score: iroForm.magnitude_score ?? iroForm.severity_scale ?? 3,
+      financial_likelihood_score: iroForm.financial_likelihood_score ?? iroForm.likelihood_scale ?? 3,
+      time_horizon: iroForm.time_horizon || null,
+      value_chain_location: iroForm.value_chain_location || null,
+      severity_rationale: iroForm.severity_rationale || null,
+      financial_rationale: iroForm.financial_rationale || null,
       impact_materiality_score: iroForm.impact_materiality_score ?? 0,
       financial_materiality_score: iroForm.financial_materiality_score ?? 0,
       double_materiality_score: iroForm.double_materiality_score ?? 0,
@@ -581,7 +591,52 @@ export default function AssessmentDetailPage() {
                     </div>
                   </div>
 
-                  {/* Computed scores preview */}
+                  {/* ESRS 1 para 43: Scale × Scope × Irremediability */}
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <p className="text-sm font-medium text-blue-800 mb-3">ESRS 1 Scoring (Scale × Scope × Irremediability)</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">Scale: <strong>{iroForm.scale_score ?? 3}</strong></label>
+                        <input type="range" min={1} max={5} value={iroForm.scale_score ?? 3} onChange={(e) => updateIroFormField("scale_score", parseInt(e.target.value))} className="w-full accent-blue-600" />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">Scope: <strong>{iroForm.scope_score ?? 3}</strong></label>
+                        <input type="range" min={1} max={5} value={iroForm.scope_score ?? 3} onChange={(e) => updateIroFormField("scope_score", parseInt(e.target.value))} className="w-full accent-blue-600" />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">Irremediability: <strong>{iroForm.irremediability_score ?? 3}</strong></label>
+                        <input type="range" min={1} max={5} value={iroForm.irremediability_score ?? 3} onChange={(e) => updateIroFormField("irremediability_score", parseInt(e.target.value))} className="w-full accent-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+                      <span>1: Very Low</span><span>3: Medium</span><span>5: Very High</span>
+                    </div>
+                  </div>
+
+                  {/* ESRS 2 IRO-1: Time horizon & value chain */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Time Horizon</label>
+                      <select value={iroForm.time_horizon ?? ""} onChange={(e) => updateIroFormField("time_horizon", e.target.value || null)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="">Select…</option>
+                        <option value="short">Short (&lt;1 year)</option>
+                        <option value="medium">Medium (1–5 years)</option>
+                        <option value="long">Long (&gt;5 years)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Value Chain Location</label>
+                      <select value={iroForm.value_chain_location ?? ""} onChange={(e) => updateIroFormField("value_chain_location", e.target.value || null)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="">Select…</option>
+                        <option value="upstream">Upstream</option>
+                        <option value="own_operations">Own Operations</option>
+                        <option value="downstream">Downstream</option>
+                        <option value="multiple">Multiple</option>
+                      </select>
+                    </div>
+                  </div>
+
+                                    {/* Computed scores preview */}
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                     <p className="text-sm font-medium text-gray-700 mb-3">Computed Scores</p>
                     <div className="grid grid-cols-3 gap-4 text-center">
