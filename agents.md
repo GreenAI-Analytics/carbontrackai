@@ -599,15 +599,23 @@ type EsgFeatureFlags = {
 | Module | Page | Tables |
 |--------|------|--------|
 | Report Builder | `/dashboard/reports` | `report_snapshots` (migration 17) — cross-pillar aggregation, JSON export |
-| Settings | `/dashboard/settings` | `organizations`, `user_roles`, `feature_flag_subscriptions` — profile, plan, team, danger zone, Climatiq refresh button |
+| Settings | `/dashboard/settings` | `organizations`, `user_roles`, `feature_flag_subscriptions` — profile, plan, team, danger zone, Climatiq refresh |
+
+#### U0001F6E1 GDPR & Data Protection
+
+- `whistleblower_officer` role added to `user_role` enum (migration 20a)
+- `whistleblower_cases` restricted to admin + whistleblower_officer (Directive 2019/1937 Art. 16)
+- `discrimination_incidents` restricted to admin-only (GDPR Art. 9 special category data)
+- `applyKAnonymity()` in `lib/social-metrics.ts` suppresses counts <10 in reports
+- `data_residency_region` column on `organizations` enforces EU/EEA storage (GDPR Art. 44-49)
 
 ### 📦 Computation Libraries
 
 | Library | Purpose |
 |--------|--------|
 | `lib/calculations.ts` | Carbon — Scope 1 & 2 (location-based), EU27 fallback factors (195 lines) |
-| `lib/materiality.ts` | ESRS 1-compliant double materiality — scale×scope×irremediability, per-assessment thresholds, time-horizon/value-chain tagging (580 lines) |
-| `lib/social-metrics.ts` | S1 workforce KPIs — headcount, turnover, H&S, training, pay gap, work-life (291 lines) |
+| `lib/materiality.ts` | ESRS 1-compliant double materiality — scale×scope×irremediability, per-assessment thresholds, time-horizon/value-chain tagging, k-anonymity helpers (600+ lines) |
+| `lib/social-metrics.ts` | S1 workforce KPIs — headcount, turnover, H&S, training, pay gap, work-life, GDPR k-anonymity suppression (300+ lines) |
 | `lib/governance-metrics.ts` | G1 governance KPIs — board, ethics, compliance, privacy, whistleblower, suppliers, political (203 lines) |
 | `lib/taxonomy.ts` | EU Taxonomy — eligibility, alignment, turnover/CapEx/OpEx KPIs, 3 depth levels, 19 NACE codes (143 lines) |
 | `lib/climatiq.ts` | Climatiq Data API v1 client — fetches emission factors for 5 activity types across 27 EU countries, maps to internal format (181 lines) |
@@ -628,12 +636,15 @@ type EsgFeatureFlags = {
 | 11 | ESRS datapoint taxonomy: 27 datapoints |
 | 12 | Assurance & change tracking |
 | 13 | Plan type enum update + 14 ESG feature flag columns |
-| 19 | Rename plan_type enum to EFRAG VSME: vsme_basic / vsme_comprehensive / csrd |
 | 14 | RLS recursion fix (SECURITY DEFINER helpers) |
 | 15 | Materiality RLS policies (INSERT/UPDATE/DELETE) |
 | 16 | SME classification columns on `organizations` |
 | 17 | `report_snapshots` — immutable JSONB report storage |
-| 18 | Scope 2 market-based: `contractual_instruments` (GoOs, PPAs, RECs), `biogenic_co2_kg`, `emission_factor_ids` |
+| 18 | Scope 2 market-based: `contractual_instruments`, `biogenic_co2_kg`, `emission_factor_ids` |
+| 19 | Rename plan_type enum to EFRAG VSME: `vsme_basic` / `vsme_comprehensive` / `csrd` |
+| 20a | Add `whistleblower_officer` to user_role enum |
+| 20b | GDPR RLS guards: restrict whistleblower_cases (admin+WB-officer), discrimination_incidents (admin-only) |
+| 21 | Materiality ESRS 1 columns: `scale_score`, `scope_score`, `irremediability_score`, `time_horizon`, `value_chain_location`, per-assessment thresholds |
 
 ### 🔔 Future / Not Yet Implemented
 
