@@ -59,7 +59,7 @@ const ESG_PILLARS: EsgPillar[] = [
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
     modules: 4,
-    modulesCompleted: 0,
+    modulesCompleted: 1, // Own Workforce (S1) implemented
     description: "Workforce, Value Chain, Communities, Consumers",
     href: "/dashboard/esg/social/workforce",
   },
@@ -71,8 +71,8 @@ const ESG_PILLARS: EsgPillar[] = [
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200",
     modules: 3,
-    modulesCompleted: 0,
-    description: "Business Ethics, Compliance, Data Privacy",
+    modulesCompleted: 1, // Business Conduct (G1) implemented
+    description: "Board, Ethics, Compliance, Whistleblower, Data Privacy, Supply Chain",
     href: "/dashboard/esg/governance/ethics",
   },
   {
