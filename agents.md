@@ -555,63 +555,90 @@ type EsgFeatureFlags = {
 
 ## 5. Current Implementation Status
 
-### ✅ Implemented (Applicable to All Modes)
+> **Last updated**: after build session completing all 25 pages (see commits `1b4cb17` through `26d6b74`).
 
-- Monorepo workspace setup with `apps/web` and `apps/api`
-- Frontend build + lint pass
-- Auth flow: signup → email confirmation → onboarding → dashboard
-- Route protection via proxy.ts
-- Dashboard sidebar with full ESG pillar navigation (7 groups, 21 links)
-- Dashboard overview with ESG pillar progress cards + carbon KPIs
-- Activity data entry (energy/fuel — covers E1 Scope 1&2 basics)
-- Carbon calculation engine (Scope 1 + Scope 2 location-based — ESRS E1-6)
-- Calculation results page with breakdown
-- Emissions page saves `calculation_runs` to Supabase
-- Database schema for carbon (E1 core) with RLS
-- Pre-seeded EU27 emission factors (ADEME, MITECO, Climatiq, EEA)
-- Branding throughout (CarbonTrackAI logos)
-- Onboarding flow creates org + roles + feature flags
-- Extended modules schema (Scope 3, targets, risk, supply chain) — re-mappable to ESRS
-- **Full ESG database schema** — 76 tables across all ESRS pillars (E1–E5, S1–S4, G1, ESRS 2, Materiality, Taxonomy, Assurance)
-- **ESRS datapoint taxonomy** — 27 datapoints seeded
-- **Plan type updated** — `vsme_lite` / `vsme_full` / `csrd_full` with 14 ESG feature flag columns
-- **Marketing homepage** — rebranded to full ESG messaging with 13 ESRS modules
-- **18 placeholder pages** — all ESG module routes created with "Coming soon" infrastructure
-- **Demo user seed script** — `apps/api/scripts/seed-demo-user.js` creates `demo@carbontrackai.com` with org, admin role, and `csrd_full` plan
-- **Demo data seed script** — `apps/api/scripts/seed-demo-data.js` creates 36 activity records (electricity, gas, diesel) + Scope 1&2 calculations for dashboard KPIs
-- **RLS recursion fix** — migration 14 replaces recursive `user_roles` policy with `SECURITY DEFINER` helper functions
-- **Login redirect** — after sign-in, redirects to `/dashboard` instead of homepage
-- **Cookie-based sessions** — browser client uses `createBrowserClient` from `@supabase/ssr` so proxy middleware can detect logged-in users
-- **Tailwind v4 theme** — `primary` color palette defined in `globals.css` via `@theme` (v4 ignores `tailwind.config.ts`)
-- **Double Materiality assessment UI** — full IRO Register with CRUD, materiality matrix visualization, and assessment summary with topic-level materiality classification
-- **Materiality library** — `lib/materiality.ts` with ESRS topic registry (10 topics, 32 subtopics), **ESRS 1-compliant scoring engine** (scale×scope×irremediability for negative, scale×scope for positive, per-assessment thresholds with rationale, time-horizon and value-chain tagging), matrix builder, and summary generator
-- **Materiality RLS policies** — migration 15 adds INSERT/UPDATE/DELETE policies for all 3 materiality tables
+### ✅ All Modules Implemented — Zero Placeholders
 
-### 🟡 Partial / Needs Adaptation (Blocking VSME-Full & CSRD-Full)
+#### 🌍 Environmental (E1–E5) — 5/5
 
-- **UIs for ESG modules** — 61 new tables exist (Social S1–S4, Governance G1, Environmental E2–E5, Materiality, Taxonomy, ESRS 2, Assurance), but data entry forms and dashboards are still placeholder pages
-- **`lib/calculations.ts`** — carbon-only; needs sibling modules for social, governance, materiality, taxonomy computation
-- **DashboardPage** — KPI cards now show ESG pillar overviews, but real composite scoring is not yet implemented
-- **Marketing pages** — rebranded to ESG messaging (done), but need ongoing refinement
-- **Onboarding** — captures sector and plan; needs ESG scope selection and mode auto-detection
+| Module | Page | Tables |
+|--------|------|--------|
+| E1 Climate | Activity Data, Emissions Results, Climate Hub | `activity_records`, `calculation_runs`, `emission_factors` |
+| E2 Pollution | `/esg/environmental/pollution` | `pollutant_inventories` |
+| E3 Water | `/esg/environmental/water` | `water_consumption`, `water_discharge` |
+| E4 Biodiversity | `/esg/environmental/biodiversity` | `biodiversity_sites` |
+| E5 Circular Economy | `/esg/environmental/circular` | `material_flows`, `waste_generation` |
 
-### ❌ Gaps / Not Yet Implemented (Required for CSRD-Full, Optional for VSME-Full)
+#### 👥 Social (S1–S4) — 4/4
 
-- **Social data entry forms (S1–S4)** — database tables exist (18 tables), but no UIs, no metric computation
-- **Governance data entry forms (G1)** — database tables exist (7 tables), but no UIs, no metric computation
-- **Environmental extended forms (E2–E5)** — database tables exist (6 tables), but no UIs (Placeholder pages for Pollution, Water, Biodiversity, Circular Economy)
-- **Double materiality assessment UI** — database tables exist (3 tables), but no wizard, no logic
-- **EU Taxonomy alignment UI** — database tables exist (2 tables), but no assessment engine
-- **ESG composite scoring / benchmarking** — no `lib/esg-scoring.ts`
-- **CSRD report builder** — placeholder page exists; no report engine (Excel/PDF/XHTML)
-- **Scope 2 market-based** — not implemented
-- **Factor refresh jobs** — no Climatiq/national API adapters
-- **CI pipeline** — no tests
+| Module | Page | Tables |
+|--------|------|--------|
+| S1 Own Workforce | `/esg/social/workforce` | `workforce_headcount`, turnover, diversity, H&S, training, pay gap, work-life (7 tables) |
+| S2 Value Chain | `/esg/social/valuechain` | `human_rights_due_diligence` |
+| S3 Communities | `/esg/social/communities` | `community_engagement` |
+| S4 Consumers | `/esg/social/consumers` | `product_safety_incidents` |
+
+#### 🏛️ Governance (G1) — 3/3
+
+| Module | Page | Tables |
+|--------|------|--------|
+| Business Ethics | `/esg/governance/ethics` | `board_composition`, `ethics_training`, suppliers, political contributions (4 tables) |
+| Compliance | `/esg/governance/compliance` | `compliance_incidents`, `whistleblower_cases` + regulatory deadlines |
+| Data Privacy | `/esg/governance/dataprivacy` | `data_breaches` + GDPR compliance + SAR tracker |
+
+#### ⚖️ Cross-Cutting — 3/3
+
+| Module | Page | Tables |
+|--------|------|--------|
+| Double Materiality | `/dashboard/materiality` | `materiality_assessments`, `materiality_iro` |
+| EU Taxonomy | `/dashboard/taxonomy` | `taxonomy_assessments`, `taxonomy_activities` |
+| ESRS 2 Disclosures | `/esg/general/governance`, `/esg/general/iro-management` | 7 tables (strategy, governance roles, stakeholders, policies, due diligence, risk mgmt, narratives) |
+
+#### 📄 Platform
+
+| Module | Page | Tables |
+|--------|------|--------|
+| Report Builder | `/dashboard/reports` | `report_snapshots` (migration 17) — cross-pillar aggregation, JSON export |
+| Settings | `/dashboard/settings` | `organizations`, `user_roles`, `feature_flag_subscriptions` — profile, plan, team, danger zone |
+
+### 📦 Computation Libraries
+
+| Library | Purpose |
+|--------|--------|
+| `lib/calculations.ts` | Carbon — Scope 1 & 2 (location-based), EU27 fallback factors (195 lines) |
+| `lib/materiality.ts` | ESRS 1-compliant double materiality — scale×scope×irremediability, per-assessment thresholds, time-horizon/value-chain tagging (580 lines) |
+| `lib/social-metrics.ts` | S1 workforce KPIs — headcount, turnover, H&S, training, pay gap, work-life (291 lines) |
+| `lib/governance-metrics.ts` | G1 governance KPIs — board, ethics, compliance, privacy, whistleblower, suppliers, political (203 lines) |
+| `lib/taxonomy.ts` | EU Taxonomy — eligibility, alignment, turnover/CapEx/OpEx KPIs, 3 depth levels, 19 NACE codes (143 lines) |
+
+### 🗄️ Database — 17 Migrations
+
+| # | Purpose |
+|---|--------|
+| 1 | Core schema: `organizations`, `user_roles`, `activity_records`, `emission_factors`, `calculation_runs` |
+| 2–3 | Auth, admin, extended modules |
+| 4 | EU27 emission factor seed data (ADEME, MITECO, Climatiq, EEA) |
+| 5 | Social schema (S1–S4): 18 tables |
+| 6 | Governance schema (G1): 7 tables |
+| 7 | Environmental extended (E2–E5): 6 tables |
+| 8 | Double materiality schema: 3 tables |
+| 9 | EU Taxonomy schema: 2 tables |
+| 10 | ESRS 2 General Disclosures: 7 tables |
+| 11 | ESRS datapoint taxonomy: 27 datapoints |
+| 12 | Assurance & change tracking |
+| 13 | Plan type enum update + 14 ESG feature flag columns |
+| 14 | RLS recursion fix (SECURITY DEFINER helpers) |
+| 15 | Materiality RLS policies (INSERT/UPDATE/DELETE) |
+| 16 | SME classification columns on `organizations` |
+| 17 | `report_snapshots` — immutable JSONB report storage |
+
+### 🔔 Future / Not Yet Implemented
+
+- **Scope 2 market-based** — `scope_2_market` enum exists but computation not built
+- **Factor refresh jobs** — no Climatiq/national API adapters for automated updates
+- **CI pipeline** — no automated tests
 - **Offline draft + sync** — no PWA
-- **Admin dashboard** — no factor/audit management UI
-- **Shared types package** — no `@carbontrackai/shared` workspace
 
----
 
 ## 6. Key Data Flows
 
