@@ -64,6 +64,13 @@ export default function OwnWorkforcePage() {
   // Form state — Pay
   const [meanGap, setMeanGap] = useState("");
   const [medianGap, setMedianGap] = useState("");
+  const [q1Female, setQ1Female] = useState("");
+  const [q2Female, setQ2Female] = useState("");
+  const [q3Female, setQ3Female] = useState("");
+  const [q4Female, setQ4Female] = useState("");
+  const [baseGap, setBaseGap] = useState("");
+  const [variableGap, setVariableGap] = useState("");
+  const [bonusGap, setBonusGap] = useState("");
   const [womenMgmt, setWomenMgmt] = useState("");
   const [menMgmt, setMenMgmt] = useState("");
   const [empDisability, setEmpDisability] = useState("");
@@ -166,6 +173,13 @@ export default function OwnWorkforcePage() {
     if (pg) {
       setMeanGap(String(pg.mean_gap_percentage ?? ""));
       setMedianGap(String(pg.median_gap_percentage ?? ""));
+      setQ1Female(String(pg.quartile_q1_female_pct ?? ""));
+      setQ2Female(String(pg.quartile_q2_female_pct ?? ""));
+      setQ3Female(String(pg.quartile_q3_female_pct ?? ""));
+      setQ4Female(String(pg.quartile_q4_female_pct ?? ""));
+      setBaseGap(String(pg.base_pay_gap_pct ?? ""));
+      setVariableGap(String(pg.variable_pay_gap_pct ?? ""));
+      setBonusGap(String(pg.bonus_pay_gap_pct ?? ""));
     }
     if (div) {
       setWomenMgmt(String(div.women_in_senior_management ?? ""));
@@ -238,6 +252,13 @@ export default function OwnWorkforcePage() {
         organization_id: orgId, reporting_period_id: periodId,
         mean_gap_percentage: toFloat(meanGap),
         median_gap_percentage: toFloat(medianGap),
+        quartile_q1_female_pct: toFloat(q1Female),
+        quartile_q2_female_pct: toFloat(q2Female),
+        quartile_q3_female_pct: toFloat(q3Female),
+        quartile_q4_female_pct: toFloat(q4Female),
+        base_pay_gap_pct: toFloat(baseGap),
+        variable_pay_gap_pct: toFloat(variableGap),
+        bonus_pay_gap_pct: toFloat(bonusGap),
       }, { onConflict: "organization_id,reporting_period_id" }),
 
       supabase.from("workforce_diversity").upsert({
@@ -437,6 +458,26 @@ export default function OwnWorkforcePage() {
             <div className="grid grid-cols-2 gap-4">
               <Field label="Mean gap (%)" value={meanGap} onChange={setMeanGap} type="decimal" placeholder="e.g. 12.5" />
               <Field label="Median gap (%)" value={medianGap} onChange={setMedianGap} type="decimal" placeholder="e.g. 9.3" />
+            </div>
+
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm font-medium text-blue-800 mb-3">Quartile Distribution by Gender (Art. 9(1)(g))</p>
+              <div className="grid grid-cols-4 gap-3">
+                <Field label="Q1 (lowest) % women" value={q1Female} onChange={setQ1Female} type="decimal" placeholder="e.g. 60" />
+                <Field label="Q2 % women" value={q2Female} onChange={setQ2Female} type="decimal" placeholder="e.g. 45" />
+                <Field label="Q3 % women" value={q3Female} onChange={setQ3Female} type="decimal" placeholder="e.g. 30" />
+                <Field label="Q4 (highest) % women" value={q4Female} onChange={setQ4Female} type="decimal" placeholder="e.g. 20" />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">Pay Components Gap</h3>
+              <p className="text-sm text-gray-500">Gap broken down by pay component — base, variable, and bonus.</p>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <Field label="Base pay gap (%)" value={baseGap} onChange={setBaseGap} type="decimal" placeholder="e.g. 8.5" />
+              <Field label="Variable pay gap (%)" value={variableGap} onChange={setVariableGap} type="decimal" placeholder="e.g. 15.2" />
+              <Field label="Bonus gap (%)" value={bonusGap} onChange={setBonusGap} type="decimal" placeholder="e.g. 22.0" />
             </div>
 
             <hr className="border-gray-200" />
