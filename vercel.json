@@ -1,0 +1,7 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && npm run build -w @carbontrackai/web",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "rootDirectory": "apps/web"
+}
