@@ -113,25 +113,6 @@ export default function SettingsPage() {
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2500);
   }
 
-  async function upgradePlan(newPlan: string) {
-    if (!org || !flags) return;
-    const isComp = newPlan === "vsme_comprehensive" || newPlan === "csrd";
-    const isCsrd = newPlan === "csrd";
-    await supabase.from("feature_flag_subscriptions").update({
-      plan_type: newPlan,
-      pollution_enabled: isComp,
-      water_enabled: isComp,
-      biodiversity_enabled: isComp,
-      circular_economy_enabled: isComp,
-      workforce_enabled: true,
-      valuechain_enabled: isComp,
-      communities_enabled: isComp,
-      consumers_enabled: isComp,
-      business_conduct_enabled: true,
-      taxonomy_enabled: isComp,
-    }).eq("organization_id", (org as any).id);
-    load();
-  }
 
   async function deleteOrg() {
     if (!org || deleteConfirm !== "DELETE") return;
@@ -227,9 +208,9 @@ export default function SettingsPage() {
                   <p className="text-2xl font-bold text-gray-900">{planLabel}</p>
                 </div>
                 <div className="flex gap-2">
-                  {flags?.plan_type === "vsme_basic" && <button onClick={() => upgradePlan("vsme_comprehensive")} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to VSME Comprehensive</button>}
-                  {flags?.plan_type === "vsme_comprehensive" && <button onClick={() => upgradePlan("csrd")} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to CSRD</button>}
-                  {(flags?.plan_type === "vsme_comprehensive" || flags?.plan_type === "csrd") && <button onClick={() => upgradePlan("vsme_basic")} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Downgrade to VSME Basic</button>}
+                  {flags?.plan_type === "vsme_basic" && <button onClick={async () => { const { data: { user } } = await supabase.auth.getUser(); const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ planType: "vsme_comprehensive", orgId: (org as any).id, userId: user?.id, email: user?.email }) }); const data = await res.json(); if (data.url) window.location.href = data.url; else alert(data.error || "Checkout failed"); }} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to VSME Comprehensive</button>}
+                  {flags?.plan_type === "vsme_comprehensive" && <button onClick={async () => { const { data: { user } } = await supabase.auth.getUser(); const res = await fetch("/api/stripe/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ planType: "csrd", orgId: (org as any).id, userId: user?.id, email: user?.email }) }); const data = await res.json(); if (data.url) window.location.href = data.url; else alert(data.error || "Checkout failed"); }} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">Upgrade to CSRD</button>}
+                  {(flags?.plan_type === "vsme_comprehensive" || flags?.plan_type === "csrd") && <button onClick={async () => { const res = await fetch("/api/stripe/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orgId: (org as any).id }) }); const data = await res.json(); if (data.url) window.location.href = data.url; else alert(data.error || "Portal failed"); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Manage billing</button>}
                 </div>
               </div>
             </div>
