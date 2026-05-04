@@ -159,25 +159,24 @@ export default function OnboardingPage() {
     const { error: flagError } = await supabase.from("feature_flag_subscriptions").insert({
       organization_id: orgData.id,
       plan_type: effectivePlan,
-      // Core modules (always free)
+      // Core modules (always free — all tiers)
       esrs2_enabled: true,
       climate_enabled: true,
       materiality_enabled: true,
       report_builder_enabled: true,
+      workforce_enabled: true,          // Basic workforce (S1) access for all tiers
+      business_conduct_enabled: true,   // Basic governance (G1) access for all tiers
       // Environmental extended (comprehensive only)
       pollution_enabled: isComprehensive,
       water_enabled: isComprehensive,
       biodiversity_enabled: isComprehensive,
       circular_economy_enabled: isComprehensive,
-      // Social (comprehensive only)
-      workforce_enabled: isComprehensive,
+      // Social extended (comprehensive only)
       valuechain_enabled: isComprehensive,
       communities_enabled: isComprehensive,
       consumers_enabled: isComprehensive,
-      // Governance (comprehensive only)
-      business_conduct_enabled: isComprehensive,
       // Cross-cutting
-      taxonomy_enabled: isCsrd,
+      taxonomy_enabled: isComprehensive, // Simplified for VSME Comprehensive, full for CSRD,
     });
 
     if (flagError) {
