@@ -69,7 +69,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://greenaianalytics.org#demo" target="_blank" rel="noreferrer" className="hover:text-primary-400">
+                <a href="https://calendly.com/zamil-khan-carbontrackai/intro" target="_blank" rel="noreferrer" className="hover:text-primary-400">
                   Book a Demo
                 </a>
               </li>

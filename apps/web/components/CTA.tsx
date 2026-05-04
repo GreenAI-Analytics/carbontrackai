@@ -69,7 +69,7 @@ export function CTA() {
         <div className="space-y-4">
           <p className="text-green-100 text-sm">
             Prefer to talk first?{" "}
-            <a href="https://greenaianalytics.org#demo" target="_blank" rel="noreferrer" className="underline font-medium text-white hover:text-green-200">
+            <a href="https://calendly.com/zamil-khan-carbontrackai/intro" target="_blank" rel="noreferrer" className="underline font-medium text-white hover:text-green-200">
               Book a free demo
             </a>{" "}
             — we&apos;ll walk you through the platform in 15 minutes.

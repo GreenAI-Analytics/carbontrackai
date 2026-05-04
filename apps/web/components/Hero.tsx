@@ -17,7 +17,7 @@ export function Hero() {
           <a href="/signup" className="rounded-lg bg-primary-600 px-8 py-4 text-lg font-semibold text-white transition hover:bg-primary-700 shadow-md">
             Get Started Free
           </a>
-          <a href="https://greenaianalytics.org#demo" target="_blank" rel="noreferrer" className="rounded-lg border-2 border-primary-200 px-8 py-4 text-lg font-semibold text-primary-700 transition hover:bg-primary-50">
+          <a href="https://calendly.com/zamil-khan-carbontrackai/intro" target="_blank" rel="noreferrer" className="rounded-lg border-2 border-primary-200 px-8 py-4 text-lg font-semibold text-primary-700 transition hover:bg-primary-50">
             Book a 15-min Demo
           </a>
         </div>
