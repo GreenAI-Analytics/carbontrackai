@@ -17,7 +17,7 @@ export function Footer() {
               />
             </div>
             <p className="text-sm">
-              One platform for Environmental, Social, and Governance disclosures — built for CSRD and ESRS compliance.
+              From NACE Code to CSRD Report in Minutes — the all-in-one ESRS compliance platform for European SMEs.
             </p>
             <div className="mt-4">
               <p className="text-xs uppercase tracking-wide text-gray-400">Built by</p>
@@ -40,21 +40,21 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Platform</h4>
+            <h4 className="text-white font-semibold mb-4">Products</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#features" className="hover:text-primary-400">
-                  ESRS Modules
+                <a href="https://greenaianalytics.org" target="_blank" rel="noreferrer" className="hover:text-primary-400">
+                  Compliance Tracker
                 </a>
               </li>
               <li>
-                <a href="#pricing" className="hover:text-primary-400">
-                  Pricing
+                <a href="/" className="hover:text-primary-400">
+                  Carbon Track AI
                 </a>
               </li>
               <li>
-                <a href="#why" className="hover:text-primary-400">
-                  Why CarbonTrackAI
+                <a href="https://greenaianalytics.org#os-for-work" target="_blank" rel="noreferrer" className="hover:text-primary-400">
+                  OS For Work
                 </a>
               </li>
             </ul>
@@ -64,44 +64,34 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a
-                  href="https://greenaianalytics.org"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-primary-400"
-                >
-                  About
+                <a href="https://greenaianalytics.org" target="_blank" rel="noreferrer" className="hover:text-primary-400">
+                  Home
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-400">
-                  Blog
+                <a href="https://greenaianalytics.org#demo" target="_blank" rel="noreferrer" className="hover:text-primary-400">
+                  Book a Demo
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-400">
-                  Careers
+                <a href="https://greenaianalytics.org#faq" target="_blank" rel="noreferrer" className="hover:text-primary-400">
+                  FAQ
                 </a>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Legal</h4>
+            <h4 className="text-white font-semibold mb-4">Connect</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="hover:text-primary-400">
-                  Privacy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-primary-400">
-                  Terms
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-primary-400">
+                <a href="https://greenaianalytics.org#contact" target="_blank" rel="noreferrer" className="hover:text-primary-400">
                   Contact
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/GreenAI-Analytics/carbontrackai" target="_blank" rel="noreferrer" className="hover:text-primary-400">
+                  GitHub
                 </a>
               </li>
             </ul>
@@ -110,7 +100,7 @@ export function Footer() {
 
         <div className="border-t border-gray-700 pt-8 text-center text-sm">
           <p>
-            &copy; 2026 CarbonTrackAI. Built for European SMEs.
+            &copy; 2026 GreenAI Analytics. All rights reserved.
           </p>
         </div>
       </div>
