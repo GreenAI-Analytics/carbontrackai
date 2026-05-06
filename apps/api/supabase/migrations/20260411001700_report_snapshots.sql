@@ -1,31 +1,23 @@
 -- ============================================================================
 -- Report Snapshots — Migration 17
--- Immutable snapshots of ESG reports for audit trail and CSRD compliance.
+-- Extends report_snapshots (created in migration 1) with JSONB report_data
+-- and metadata columns for the Report Builder.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS public.report_snapshots (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  reporting_period_id UUID NOT NULL REFERENCES public.reporting_periods(id) ON DELETE CASCADE,
-  title VARCHAR(200) NOT NULL,
-  report_data JSONB NOT NULL,
-  generated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  status VARCHAR(50) DEFAULT 'draft',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- Make legacy NOT NULL columns nullable (report data now goes into report_data JSONB)
+ALTER TABLE public.report_snapshots
+  ALTER COLUMN scope1_emissions DROP NOT NULL,
+  ALTER COLUMN scope2_location_emissions DROP NOT NULL,
+  ALTER COLUMN scope2_market_emissions DROP NOT NULL,
+  ALTER COLUMN total_energy DROP NOT NULL;
 
-COMMENT ON TABLE public.report_snapshots IS 'Immutable ESG report snapshots. Once created, report_data is append-only for audit trail.';
+-- Add new columns for Report Builder
+ALTER TABLE public.report_snapshots
+  ADD COLUMN IF NOT EXISTS title VARCHAR(200) DEFAULT 'Untitled Report',
+  ADD COLUMN IF NOT EXISTS report_data JSONB,
+  ADD COLUMN IF NOT EXISTS generated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';
 
-ALTER TABLE public.report_snapshots ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can access their organization's report_snapshots"
-  ON public.report_snapshots
-  FOR SELECT
-  USING (
-    organization_id IN (
-      SELECT organization_id FROM public.user_roles WHERE user_id = auth.uid()
-    )
-  );
-
-CREATE INDEX IF NOT EXISTS idx_report_snapshots_org ON public.report_snapshots(organization_id);
-CREATE INDEX IF NOT EXISTS idx_report_snapshots_period ON public.report_snapshots(reporting_period_id);
+COMMENT ON COLUMN public.report_snapshots.report_data IS 'Full ESG report as JSONB — used by Report Builder';
+COMMENT ON COLUMN public.report_snapshots.title IS 'Human-readable report title (e.g. ESG Report 2025)';
+COMMENT ON COLUMN public.report_snapshots.status IS 'draft | final';
