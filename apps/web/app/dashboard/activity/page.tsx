@@ -42,6 +42,10 @@ export default function ActivityPage() {
   const [quantity, setQuantity] = useState("");
   const [month, setMonth] = useState("");
   const [notes, setNotes] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editQty, setEditQty] = useState("");
+  const [editMonth, setEditMonth] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   const currentMeta = ACTIVITY_META[activityType];
 
@@ -346,32 +350,34 @@ export default function ActivityPage() {
               <tbody className="divide-y divide-gray-100">
                 {records.map((record) => {
                   const meta = ACTIVITY_META[record.activity_type];
+                  const isEditing = editingId === record.id;
                   return (
-                    <tr key={record.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 font-medium text-gray-900">
-                        {meta?.label ?? record.activity_type}
-                      </td>
-                      <td className={`px-6 py-3 text-xs font-semibold ${
-                        meta?.scope === "scope_1" ? "text-orange-600" : "text-blue-600"
-                      }`}>
-                        {meta?.scope === "scope_1" ? "Scope 1" : "Scope 2"}
-                      </td>
+                    <tr key={record.id} className={isEditing ? "bg-yellow-50" : "hover:bg-gray-50"}>
+                      <td className="px-6 py-3 font-medium text-gray-900">{meta?.label ?? record.activity_type}</td>
+                      <td className={"px-6 py-3 text-xs font-semibold " + (meta?.scope === "scope_1" ? "text-orange-600" : "text-blue-600")}>{meta?.scope === "scope_1" ? "Scope 1" : "Scope 2"}</td>
                       <td className="px-6 py-3 text-gray-700 tabular-nums">
-                        {Number(record.quantity).toLocaleString()} {meta?.unit ?? record.unit}
+                        {isEditing ? (
+                          <input type="number" min="0" step="any" value={editQty} onChange={(e) => setEditQty(e.target.value)} className="w-28 rounded border border-gray-300 px-2 py-1 text-sm" />
+                        ) : (
+                          <>{Number(record.quantity).toLocaleString()} {meta?.unit ?? record.unit}</>
+                        )}
                       </td>
                       <td className="px-6 py-3 text-gray-500">
-                        {record.month ? MONTH_SHORT[record.month - 1] : "—"}
+                        {isEditing ? (
+                          <select value={editMonth} onChange={(e) => setEditMonth(e.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm"><option value="">Full year</option>{MONTH_SHORT.map((m,i) => <option key={i+1} value={i+1}>{m}</option>)}</select>
+                        ) : (record.month ? MONTH_SHORT[record.month - 1] : "—")}
                       </td>
-                      <td className="px-6 py-3 text-gray-500 max-w-xs truncate">
-                        {record.notes ?? "—"}
+                      <td className="px-6 py-3 text-gray-500 max-w-xs">
+                        {isEditing ? (
+                          <input type="text" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" placeholder="Notes" />
+                        ) : (<span className="truncate block">{record.notes ?? "—"}</span>)}
                       </td>
-                      <td className="px-6 py-3 text-right">
-                        <button
-                          onClick={() => handleDelete(record.id)}
-                          className="text-xs text-red-500 hover:text-red-700 transition"
-                        >
-                          Remove
-                        </button>
+                      <td className="px-6 py-3 text-right whitespace-nowrap">
+                        {isEditing ? (
+                          <><button onClick={() => saveEdit(record.id)} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium mr-2">Save</button><button onClick={cancelEdit} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button></>
+                        ) : (
+                          <><button onClick={() => startEdit(record)} className="text-xs text-primary-600 hover:text-primary-700 font-medium mr-2">Edit</button><button onClick={() => handleDelete(record.id)} className="text-xs text-red-500 hover:text-red-700">Remove</button></>
+                        )}
                       </td>
                     </tr>
                   );
