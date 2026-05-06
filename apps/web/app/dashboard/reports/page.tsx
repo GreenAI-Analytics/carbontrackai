@@ -84,7 +84,7 @@ export default function ReportsPage() {
       supabase.from("biodiversity_sites").select("*").eq("organization_id", orgId),
       supabase.from("material_flows").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid),
       supabase.from("waste_generation").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid),
-      supabase.from("materiality_iro").select("topic,title,double_materiality_score").eq("assessment_id", matAssessmentId)
+      supabase.from("materiality_iro").select("topic,title,double_materiality_score").eq("assessment_id", matAssessmentId),
       supabase.from("taxonomy_activities").select("*").eq("assessment_id", taxAssessmentId),
       supabase.from("strategy_business_model").select("narrative_description").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
       supabase.from("policy_documents").select("policy_title,esrs_reference").eq("organization_id", orgId),
