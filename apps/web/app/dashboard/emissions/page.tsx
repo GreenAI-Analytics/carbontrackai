@@ -205,7 +205,7 @@ export default function EmissionsPage() {
       );
 
       setScope2Market(marketResult.scope2MarketTco2e);
-      
+
       await supabase.from("calculation_runs").upsert({
         organization_id: orgId,
         reporting_period_id: selectedPeriodId,
@@ -233,17 +233,35 @@ export default function EmissionsPage() {
         calculatedAt: new Date().toISOString(),
       }
     : savedRuns.length > 0
-    ? {
-        scope1: savedRuns.find((r) => r.scope_type === "scope_1")?.total_emissions ?? 0,
-        scope2: savedRuns.find((r) => r.scope_type === "scope_2_location")?.total_emissions ?? 0,
-        scope2Market: savedRuns.find((r) => r.scope_type === "scope_2_market")?.total_emissions ?? null,
-        totalMWh: savedRuns.find((r) => r.scope_type === "scope_1")?.total_energy ?? 0,
-        breakdown: [
+    ? (() => {
+        const rawBreakdown = [
           ...(savedRuns.find((r) => r.scope_type === "scope_1")?.breakdown ?? []),
           ...(savedRuns.find((r) => r.scope_type === "scope_2_location")?.breakdown ?? []),
-        ],
-        calculatedAt: savedRuns[0]?.calculated_at ?? "",
-      }
+        ];
+        // Normalise breakdown items: filter out non-objects (e.g. double-encoded JSON strings) and ensure numeric fields
+        const breakdown: BreakdownItem[] = rawBreakdown
+          .filter((item) => typeof item === "object" && item !== null)
+          .map((item) => ({
+            activityType: (item.activityType as ActivityType) ?? "electricity",
+            label: String(item.label ?? "Unknown"),
+            quantity: Number(item.quantity ?? 0),
+            unit: String(item.unit ?? ""),
+            emissionsKgCo2e: Number(item.emissionsKgCo2e ?? 0),
+            emissionsTco2e: Number(item.emissionsTco2e ?? 0),
+            energyMWh: Number(item.energyMWh ?? 0),
+            factorValue: Number(item.factorValue ?? 0),
+            factorRegion: String(item.factorRegion ?? ""),
+            scope: (item.scope === "scope_1" ? "scope_1" : "scope_2") as "scope_1" | "scope_2",
+          }));
+        return {
+          scope1: savedRuns.find((r) => r.scope_type === "scope_1")?.total_emissions ?? 0,
+          scope2: savedRuns.find((r) => r.scope_type === "scope_2_location")?.total_emissions ?? 0,
+          scope2Market: savedRuns.find((r) => r.scope_type === "scope_2_market")?.total_emissions ?? null,
+          totalMWh: savedRuns.find((r) => r.scope_type === "scope_1")?.total_energy ?? 0,
+          breakdown,
+          calculatedAt: savedRuns[0]?.calculated_at ?? "",
+        };
+      })()
     : null;
 
   if (loading) {
@@ -413,10 +431,10 @@ export default function EmissionsPage() {
                             <span className="text-xs text-gray-400">{item.factorRegion}</span>
                           </td>
                           <td className="px-6 py-3 text-right font-medium text-gray-900 tabular-nums">
-                            {item.emissionsTco2e.toFixed(3)}
+                            {typeof item.emissionsTco2e === "number" ? item.emissionsTco2e.toFixed(3) : "—"}
                           </td>
                           <td className="px-6 py-3 text-right text-gray-700 tabular-nums">
-                            {item.energyMWh.toFixed(2)}
+                            {typeof item.energyMWh === "number" ? item.energyMWh.toFixed(2) : "—"}
                           </td>
                         </tr>
                       );

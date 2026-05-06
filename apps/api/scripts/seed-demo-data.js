@@ -279,31 +279,47 @@ async function createCalculationRuns(periodId) {
   console.log(`   Scope 2 (location): ${scope2Tco2e} tCO2e`);
   console.log(`   Total energy: ${totalMWh} MWh`);
 
-  // Build breakdown JSON
-  const breakdown = {
-    electricity: {
-      total_kwh: totalElectricityKWh,
-      factor_kg_per_kwh: factorMap["electricity"] || 0.340,
-      region: "DE",
-      emissions_kg_co2e: Math.round(scope2Kg * 100) / 100,
+  // Build breakdown JSON in frontend BreakdownItem format
+  const scope1Breakdown = [
+    {
+      activityType: "natural_gas",
+      label: "Natural Gas",
+      quantity: totalNaturalGasM3,
+      unit: "m³",
+      emissionsKgCo2e: Math.round(totalNaturalGasM3 * (factorMap["natural_gas"] || 2.04) * 100) / 100,
+      emissionsTco2e: Math.round((totalNaturalGasM3 * (factorMap["natural_gas"] || 2.04) / 1000) * 100) / 100,
+      energyMWh: Math.round((totalNaturalGasM3 * 10.55 / 1000) * 100) / 100,
+      factorValue: factorMap["natural_gas"] || 2.04,
+      factorRegion: "EU",
+      scope: "scope_1",
     },
-    natural_gas: {
-      total_m3: totalNaturalGasM3,
-      factor_kg_per_m3: factorMap["natural_gas"] || 2.04,
-      region: "EU",
-      emissions_kg_co2e: Math.round(
-        totalNaturalGasM3 * (factorMap["natural_gas"] || 2.04) * 100
-      ) / 100,
+    {
+      activityType: "diesel_car_fuel",
+      label: "Diesel (Company Car)",
+      quantity: totalDieselL,
+      unit: "L",
+      emissionsKgCo2e: Math.round(totalDieselL * (factorMap["diesel_car_fuel"] || 2.68) * 100) / 100,
+      emissionsTco2e: Math.round((totalDieselL * (factorMap["diesel_car_fuel"] || 2.68) / 1000) * 100) / 100,
+      energyMWh: Math.round((totalDieselL * 9.59 / 1000) * 100) / 100,
+      factorValue: factorMap["diesel_car_fuel"] || 2.68,
+      factorRegion: "EU",
+      scope: "scope_1",
     },
-    diesel_car_fuel: {
-      total_l: totalDieselL,
-      factor_kg_per_l: factorMap["diesel_car_fuel"] || 2.68,
-      region: "EU",
-      emissions_kg_co2e: Math.round(
-        totalDieselL * (factorMap["diesel_car_fuel"] || 2.68) * 100
-      ) / 100,
+  ];
+  const scope2Breakdown = [
+    {
+      activityType: "electricity",
+      label: "Electricity",
+      quantity: totalElectricityKWh,
+      unit: "kWh",
+      emissionsKgCo2e: Math.round(scope2Kg * 100) / 100,
+      emissionsTco2e: scope2Tco2e,
+      energyMWh: totalMWh,
+      factorValue: factorMap["electricity"] || 0.340,
+      factorRegion: "DE",
+      scope: "scope_2",
     },
-  };
+  ];
 
   const factorVersions = {
     electricity: { region: "DE", value: factorMap["electricity"] || 0.340, source: "EEA (via Climatiq)" },
@@ -331,11 +347,11 @@ async function createCalculationRuns(periodId) {
       scope_type: "scope_1",
       total_emissions: scope1Tco2e,
       total_energy: null,
-      breakdown: JSON.stringify({ sources: [breakdown.natural_gas, breakdown.diesel_car_fuel] }),
-      factor_versions: JSON.stringify({
+      breakdown: scope1Breakdown,
+      factor_versions: {
         natural_gas: factorVersions.natural_gas,
         diesel_car_fuel: factorVersions.diesel_car_fuel,
-      }),
+      },
     },
     {
       organization_id: DEMO_ORG_ID,
@@ -343,8 +359,8 @@ async function createCalculationRuns(periodId) {
       scope_type: "scope_2_location",
       total_emissions: scope2Tco2e,
       total_energy: totalMWh,
-      breakdown: JSON.stringify({ sources: [breakdown.electricity] }),
-      factor_versions: JSON.stringify({ electricity: factorVersions.electricity }),
+      breakdown: scope2Breakdown,
+      factor_versions: { electricity: factorVersions.electricity },
     },
   ];
 

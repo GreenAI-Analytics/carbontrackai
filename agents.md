@@ -664,6 +664,7 @@ type EsgFeatureFlags = {
 - **Whistleblower channel** — anonymous web form, case timers, Directive 2019/1937 compliant
 - **Country overlays** — 8 EU member states with filing portals, factor authorities, labour law extensions
 - **Demo data** — comprehensive seed script for all ESG modules
+- **Emissions page crash** — fixed `Uncaught TypeError: e.emissionsTco2e is undefined` caused by JSON double-encoding in seed script + missing defensive checks in breakdown table render
 
 ### 🔔 Future / Not Yet Implemented
 
@@ -1192,6 +1193,7 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 - **Migrations 14 & 15 must be applied manually via SQL Editor** — they cannot be pushed via `supabase db push` due to the pooler connection issue. Run the SQL from the migration files in the Supabase Dashboard SQL Editor.
 - **Materiality page has no stakeholder engagement tab yet** — the `stakeholder_engagement` table exists with RLS, but the UI only has IRO Register, Matrix, and Summary tabs. A future step should add stakeholder engagement logging.
 - **Stakeholder engagement table not yet connected to the UI** — `stakeholder_engagement` table has RLS policies (migration 15) but no data entry forms exist.
+- **JSONB columns: never `JSON.stringify()` before insert** — when inserting into `JSONB` columns via Supabase JS client, pass JavaScript objects/arrays directly. Using `JSON.stringify()` causes double-encoding (the value becomes a JSON string literal instead of a JSON object). When spread back (`[...str]`), it explodes into characters. If you encounter `TypeError: can't access property "toFixed"` or similar on data from a JSONB column, check for double-encoding in the seed/insert path.
 
 ### ✅ Resolved Issues
 
@@ -1201,6 +1203,7 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 - **Tailwind v4 custom colors not resolving** — fixed by moving `primary` color palette from `tailwind.config.ts` (ignored by v4) into `globals.css` via `@theme` directive.
 - **Missing INSERT/UPDATE/DELETE RLS on materiality tables** — fixed in migration 15. The original migration 8 only created SELECT policies, preventing users from adding IROs through the API.
 - **Double Materiality Implemented page** — replaced the "Coming soon" Implemented with a full working UI: assessment list, IRO Register CRUD, materiality matrix visualization, and summary with topic-level classification.
+- **Emissions page `TypeError: e.emissionsTco2e is undefined`** — seed script was `JSON.stringify()`-ing `breakdown` before inserting into a `JSONB` column, causing double-encoding. When read back and spread (`[...doubleEncodedString]`), it produced an array of characters instead of breakdown items. Fixed by: (1) removing `JSON.stringify()` in the seed script, (2) adding normalization in `displayData` construction that filters out non-object items, (3) adding `typeof` guards before `.toFixed()` calls in the render.
 
 ---
 
