@@ -1210,6 +1210,7 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 - **Climate page not filtering by year** — Energy & Emissions page queried calculation_runs with non-existent columns (scope1, scope2, year), counted activity records across ALL periods, and contractual instruments weren't scoped to a reporting year. Added year selector + reporting_period_id filtering matching the Activity/Emissions page pattern.
 - **Reports page calculation_runs query bug** — queried with .limit(1) which only returned one scope_type row, and referenced non-existent columns (scope1, scope2, totalMWh). Fixed to fetch all rows for the period and aggregate by scope_type.
 ---
+n- **Production readiness audit** — audited against production-code-readiness.md and security.md. Addressed 10 critical/medium items: zod validation on all API routes, npm audit zeroed (0 vulns), rate limiting, security headers (CSP/X-Frame/XSS/Referrer), secured refresh-factors endpoint with admin key, error boundary pages, health check endpoint, 14 unit tests on calculations.ts, structured logger replacing console.*, crash handlers (instrumentation.ts), and IroForm component extraction from 965-line materiality page.
 
 ## 12. Naming Conventions
 
