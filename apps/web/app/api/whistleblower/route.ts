@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { whistleblowerSchema, parseBody } from "@/lib/validations";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 submissions per minute per IP
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(ip, RATE_LIMITS.publicForm);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many submissions. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    );
+  }
+
   try {
     const raw = await request.json();
     const parsed = parseBody(whistleblowerSchema, raw);

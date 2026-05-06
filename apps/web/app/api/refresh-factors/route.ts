@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { fetchAllFactors, mapToDbRows, type FactorRefreshResult } from "@/lib/climatiq";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function GET(request: NextRequest) {
+  // Rate limit: 30 requests per minute per IP
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(ip, RATE_LIMITS.admin);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    );
+  }
+
   // Require admin API key
   const authHeader = request.headers.get("authorization");
   const expectedKey = process.env.ADMIN_API_KEY;
