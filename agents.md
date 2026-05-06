@@ -34,8 +34,6 @@ The platform adapts dynamically to SME size and regulatory scope, supporting thr
 | **Subsidiaries of large groups** | Required by parent | — | — | ⚠ Possibly | **CSRD** |
 
 > **Omnibus I (2025) note**: Under the proposed Omnibus simplification package, the CSRD scope threshold would rise to **>1,000 employees + €50M turnover or €25M balance sheet**. If adopted as proposed, the vast majority of listed SMEs will fall *out* of mandatory CSRD and into the voluntary VSME regime. The onboarding auto-detection logic accounts for this; listed SMEs are no longer unconditionally routed to CSRD.
-
-
 ### Platform Modes
 
 > **Naming note**: The official EFRAG VSME standard (published Dec 2024) defines two modules: **Basic Module (B1–B11)** and **Comprehensive Module (C1–C9)**. The codebase currently uses the legacy names `VSME Basic` and `VSME Comprehensive`. Migration 19 aligned the enum with the official EFRAG naming: `vsme_basic` / `vsme_comprehensive` / `csrd`. See `features.md` §1.1 (marked as RESOLVED).
@@ -341,8 +339,6 @@ apps/api/
 | `import_jobs` | — | Import tracking | Status, file, rows processed |
 | `export_jobs` | — | Export tracking | Format, file path, status |
 | `feature_flag_subscriptions` | — | ESG module gating | `plan_type` (vsme_basic/vsme_comprehensive/csrd), per-module boolean flags, `expires_at` |
-
-
 
 ### 3.4 Auth & Admin Tables (Migration 2)
 
@@ -666,9 +662,11 @@ type EsgFeatureFlags = {
 - **Demo data** — comprehensive seed script for all ESG modules
 - **Emissions page crash** — fixed `Uncaught TypeError: e.emissionsTco2e is undefined` caused by JSON double-encoding in seed script + missing defensive checks in breakdown table render
 - **Climate page year-filtering** — added year selector + `reporting_period_id` filtering to Energy & Emissions page. Previously queried non-existent columns (`scope1`, `scope2`, `year`) on `calculation_runs` and counted activity records / contractual instruments across ALL periods. Now scoped to the selected reporting year like the Activity and Emissions pages.
+- **Production readiness audit & hardening** — audited against production-code-readiness.md and security.md. Addressed 10 items: zod validation on all API routes + key forms, npm audit zeroed (0 vulns), IP-based rate limiting, security headers (CSP/X-Frame/XSS/Referrer/Permissions-Policy), secured refresh-factors with admin API key, error boundary pages, health check endpoint, 14 unit tests, structured JSON logger, crash handlers (instrumentation.ts), extracted IroForm component. Verified: tsc passes, 14/14 tests pass.
 
 ### 🔔 Future / Not Yet Implemented
 
+- **Swap IroForm into materiality page** — component extracted and ready, needs import + prop wiring
 - **Offline draft + sync** — no PWA
 - **Shared types package** — no `@carbontrackai/shared` workspace
 - **Multilingual reports** — i18n on UI strings not yet implemented
@@ -1110,8 +1108,6 @@ The script creates:
 - **Scope 2 calculation run** — 16.83 tCO₂e (German grid electricity, 49.5 MWh)
 
 The script is idempotent — it skips records that already exist.
-
-
 
 ### Adding a New ESG Module
 
