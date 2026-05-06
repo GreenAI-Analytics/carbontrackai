@@ -1,11 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { fetchAllFactors, mapToDbRows, type FactorRefreshResult } from "@/lib/climatiq";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120; // 2 minutes — factor refresh can be slow
+export const maxDuration = 120;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Require admin API key
+  const authHeader = request.headers.get("authorization");
+  const expectedKey = process.env.ADMIN_API_KEY;
+  if (!expectedKey || authHeader !== `Bearer ${expectedKey}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const start = Date.now();
   const result: FactorRefreshResult = {
     source: "Climatiq",
@@ -17,17 +24,14 @@ export async function GET() {
   };
 
   try {
-    // Supabase service client (server-side, uses service_role key)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 1. Fetch factors from Climatiq
     const factors = await fetchAllFactors();
     result.factorsFetched = factors.length;
 
-    // Track unique countries
     const countries = new Set(factors.map((f) => f.region).filter((r) => r !== "EU"));
     result.countries = Array.from(countries).sort();
 
@@ -37,7 +41,6 @@ export async function GET() {
       return NextResponse.json(result, { status: 200 });
     }
 
-    // 2. Get or create Climatiq source
     let { data: source } = await supabase
       .from("factor_sources")
       .select("id")
@@ -66,13 +69,11 @@ export async function GET() {
       return NextResponse.json(result, { status: 500 });
     }
 
-    // 3. Delete old Climatiq factors for this source
     await supabase
       .from("emission_factors")
       .delete()
       .eq("source_id", source.id);
 
-    // 4. Insert new factors
     const rows = mapToDbRows(factors);
     const batchSize = 50;
     let inserted = 0;
@@ -99,7 +100,6 @@ export async function GET() {
 
     result.factorsInserted = inserted;
 
-    // 5. Update source last_updated
     await supabase
       .from("factor_sources")
       .update({ last_updated: new Date().toISOString() })
@@ -107,8 +107,8 @@ export async function GET() {
 
     result.durationMs = Date.now() - start;
     return NextResponse.json(result);
-  } catch (err: any) {
-    result.errors.push(err.message ?? "Unknown error");
+  } catch (err: unknown) {
+    result.errors.push(err instanceof Error ? err.message : "Unknown error");
     result.durationMs = Date.now() - start;
     return NextResponse.json(result, { status: 500 });
   }

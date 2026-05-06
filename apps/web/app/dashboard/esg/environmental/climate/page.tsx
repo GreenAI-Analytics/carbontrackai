@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
+import { contractualInstrumentSchema } from "@/lib/validations";
 import { formatTco2e, formatMWh } from "@/lib/calculations";
 
 type LatestCalc = {
@@ -146,6 +147,22 @@ export default function EnergyEmissionsPage() {
     if (!orgId || !selectedPeriodId) return;
     setInstLoading(true);
     const form = e.target;
+
+    const parsed = contractualInstrumentSchema.safeParse({
+      instrument_type: form.instType.value,
+      description: form.desc.value || undefined,
+      mwh_covered: parseFloat(form.mwh.value) || 0,
+      certificate_id: form.certId.value || undefined,
+      supplier: form.supplier.value || undefined,
+      country: form.country.value || undefined,
+      vintage_year: parseInt(form.vintage.value) || undefined,
+    });
+    if (!parsed.success) {
+      console.error("Validation failed:", parsed.error.flatten());
+      setInstLoading(false);
+      return;
+    }
+
     const { error } = await supabase.from("contractual_instruments").insert({
       organization_id: orgId,
       reporting_period_id: selectedPeriodId,

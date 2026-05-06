@@ -6,6 +6,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
 import { ACTIVITY_META, ActivityType, ACTIVITY_TYPES } from "@/lib/calculations";
 
+import { activityRecordSchema } from "@/lib/validations";
+
 type ActivityRecord = {
   id: string;
   activity_type: ActivityType;
@@ -149,6 +151,17 @@ export default function ActivityPage() {
     if (!selectedPeriodId || !orgId) return;
     setSaving(true);
     setError(null);
+    const parsed = activityRecordSchema.safeParse({
+      activityType,
+      quantity: parseFloat(quantity),
+      month: month ? parseInt(month) : null,
+      notes: notes || null,
+    });
+    if (!parsed.success) {
+      setError(parsed.error.issues.map((i) => i.message).join(", "));
+      setSaving(false);
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
 

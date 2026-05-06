@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { checkoutSchema, parseBody } from "@/lib/validations";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -11,10 +12,10 @@ const PRICE_IDS: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { planType, orgId, userId, email } = await request.json();
-    if (!planType || !orgId || !userId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+    const raw = await request.json();
+    const parsed = parseBody(checkoutSchema, raw);
+    if (!parsed.success) return parsed.error;
+    const { planType, orgId, userId, email } = parsed.data;
 
     const priceId = PRICE_IDS[planType];
     if (!priceId) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
