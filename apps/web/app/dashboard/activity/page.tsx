@@ -116,7 +116,8 @@ export default function ActivityPage() {
       setOrgId(id);
 
       const perList = await refreshPeriods(id);
-      const defaultYear = perList[0]?.year ?? new Date().getFullYear() - 1;
+      const currentYear = new Date().getFullYear();
+      const defaultYear = perList[0]?.year ?? currentYear;
       setSelectedYear(defaultYear);
 
       const periodId = await getOrCreatePeriod(id, defaultYear);
@@ -182,7 +183,8 @@ export default function ActivityPage() {
   }
 
   // Year buttons: last 5 calendar years
-  const yearOptions = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i - 1);
+  const currentYr = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYr - i);
 
   if (loading) {
     return <p className="text-gray-500 animate-pulse">Loading activity data…</p>;
@@ -213,19 +215,23 @@ export default function ActivityPage() {
       {/* Year selector */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm font-medium text-gray-700">Reporting year:</span>
-        {yearOptions.map((yr) => (
+        {yearOptions.map((yr) => {
+            const isHistorical = yr < currentYr;
+            return (
           <button
             key={yr}
             onClick={() => handleYearChange(yr)}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               selectedYear === yr
                 ? "bg-primary-600 text-white"
+                : isHistorical ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
-            {yr}
+            {yr}{isHistorical ? " 📜" : ""}
           </button>
-        ))}
+            );
+          })}
       </div>
 
       {/* Add record form */}
