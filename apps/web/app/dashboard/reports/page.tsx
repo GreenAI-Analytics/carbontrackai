@@ -69,7 +69,7 @@ export default function ReportsPage() {
       supabase.from("health_safety_incidents").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
       supabase.from("training_records").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
       supabase.from("gender_pay_gap").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
-      supabase.from("calculation_runs").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid).order("created_at", { ascending: false }).limit(1),
+      supabase.from("calculation_runs").select("scope_type,total_emissions,total_energy").eq("organization_id", orgId).eq("reporting_period_id", pid),
       supabase.from("activity_records").select("activity_type,quantity,unit").eq("organization_id", orgId).eq("reporting_period_id", pid),
       supabase.from("board_composition").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
       supabase.from("ethics_training").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid),
@@ -112,7 +112,7 @@ export default function ReportsPage() {
       },
       environmental: {
         climate: {
-          calculations: calc?.length ? { scope1_tco2e: calc[0].scope1, scope2_tco2e: calc[0].scope2, total_mwh: calc[0].totalMWh } : null,
+          calculations: calc?.length ? (() => { const s1 = calc.find((c: any) => c.scope_type === "scope_1"); const s2 = calc.find((c: any) => c.scope_type === "scope_2_location"); return { scope1_tco2e: Number(s1?.total_emissions ?? 0), scope2_tco2e: Number(s2?.total_emissions ?? 0), total_mwh: Number(s1?.total_energy ?? s2?.total_energy ?? 0) }; })() : null,
           activityRecords: act?.length ?? 0,
         },
         pollution: { pollutants: poll?.length ?? 0 },

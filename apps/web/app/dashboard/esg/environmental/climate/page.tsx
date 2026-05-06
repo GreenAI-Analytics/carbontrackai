@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
 import { formatTco2e, formatMWh } from "@/lib/calculations";
@@ -12,18 +12,143 @@ type LatestCalc = {
   year: number;
 };
 
+type ReportingPeriod = {
+  id: string;
+  year: number;
+};
+
 export default function EnergyEmissionsPage() {
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear() - 1);
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
+  const [periods, setPeriods] = useState<ReportingPeriod[]>([]);
   const [latestCalc, setLatestCalc] = useState<LatestCalc | null>(null);
   const [activityCount, setActivityCount] = useState<number>(0);
   const [instruments, setInstruments] = useState<any[]>([]);
   const [instLoading, setInstLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const fetchPeriods = useCallback(async (oid: string) => {
+    const { data } = await supabase
+      .from("reporting_periods")
+      .select("id, year")
+      .eq("organization_id", oid)
+      .order("year", { ascending: false });
+    return (data ?? []) as ReportingPeriod[];
+  }, []);
+
+  const getOrCreatePeriod = useCallback(
+    async (oid: string, year: number): Promise<string | null> => {
+      const { data: existing } = await supabase
+        .from("reporting_periods")
+        .select("id")
+        .eq("organization_id", oid)
+        .eq("year", year)
+        .single();
+
+      if (existing) return existing.id;
+
+      const { data: created } = await supabase
+        .from("reporting_periods")
+        .insert({
+          organization_id: oid,
+          year,
+          start_date: `${year}-01-01`,
+          end_date: `${year}-12-31`,
+        })
+        .select("id")
+        .single();
+
+      return created?.id ?? null;
+    },
+    []
+  );
+
+  const fetchData = useCallback(async (oid: string, periodId: string, year: number) => {
+    // Fetch calculation runs for this period — scope_1 and scope_2_location
+    const { data: calcs } = await supabase
+      .from("calculation_runs")
+      .select("scope_type, total_emissions, total_energy")
+      .eq("organization_id", oid)
+      .eq("reporting_period_id", periodId);
+
+    if (calcs && calcs.length > 0) {
+      const scope1Run = calcs.find((c: any) => c.scope_type === "scope_1");
+      const scope2Run = calcs.find((c: any) => c.scope_type === "scope_2_location");
+      setLatestCalc({
+        scope1: Number(scope1Run?.total_emissions ?? 0),
+        scope2: Number(scope2Run?.total_emissions ?? 0),
+        totalMWh: Number(scope1Run?.total_energy ?? scope2Run?.total_energy ?? 0),
+        year,
+      });
+    } else {
+      setLatestCalc(null);
+    }
+
+    // Count activity records for this period
+    const { count } = await supabase
+      .from("activity_records")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", oid)
+      .eq("reporting_period_id", periodId)
+      .is("deleted_at", null);
+
+    setActivityCount(count ?? 0);
+
+    // Fetch contractual instruments for this period
+    const { data: inst } = await supabase
+      .from("contractual_instruments")
+      .select("*")
+      .eq("organization_id", oid)
+      .eq("reporting_period_id", periodId);
+    if (inst) setInstruments(inst);
+  }, []);
+
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: role } = await supabase
+        .from("user_roles")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!role) { setLoading(false); return; }
+      const oid = role.organization_id;
+      setOrgId(oid);
+
+      const perList = await fetchPeriods(oid);
+      setPeriods(perList);
+
+      const year = perList[0]?.year ?? new Date().getFullYear() - 1;
+      setSelectedYear(year);
+      const periodId = await getOrCreatePeriod(oid, year);
+      setSelectedPeriodId(periodId);
+      if (periodId) await fetchData(oid, periodId, year);
+
+      setLoading(false);
+    }
+    init();
+  }, [fetchPeriods, getOrCreatePeriod, fetchData]);
+
+  const handleYearChange = async (year: number) => {
+    if (!orgId) return;
+    setSelectedYear(year);
+    const periodId = await getOrCreatePeriod(orgId, year);
+    setSelectedPeriodId(periodId);
+    if (periodId) await fetchData(orgId, periodId, year);
+  };
+
   async function saveInstrument(e: any) {
     e.preventDefault();
+    if (!orgId || !selectedPeriodId) return;
     setInstLoading(true);
     const form = e.target;
-    await supabase.from("contractual_instruments").insert({
+    const { error } = await supabase.from("contractual_instruments").insert({
+      organization_id: orgId,
+      reporting_period_id: selectedPeriodId,
       instrument_type: form.instType.value,
       description: form.desc.value || null,
       mwh_covered: parseFloat(form.mwh.value) || 0,
@@ -32,11 +157,13 @@ export default function EnergyEmissionsPage() {
       country: form.country.value || null,
       vintage_year: parseInt(form.vintage.value) || null,
     });
-    // Refresh list
-    const { data: inst } = await supabase.from("contractual_instruments").select("*").eq("organization_id", (await supabase.from("user_roles").select("organization_id").eq("user_id", (await supabase.auth.getUser()).data.user!.id).single()).data?.organization_id);
-    if (inst) setInstruments(inst);
+    if (error) {
+      console.error("Failed to save instrument:", error.message);
+    } else {
+      form.reset();
+      if (orgId && selectedPeriodId) await fetchData(orgId, selectedPeriodId, selectedYear);
+    }
     setInstLoading(false);
-    form.reset();
   }
 
   async function deleteInstrument(id: string) {
@@ -44,52 +171,8 @@ export default function EnergyEmissionsPage() {
     setInstruments(instruments.filter((i: any) => i.id !== id));
   }
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get user's org
-      const { data: role } = await supabase
-        .from("user_roles")
-        .select("organization_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!role) { setLoading(false); return; }
-      const orgId = role.organization_id;
-
-      // Fetch latest calculation
-      const { data: calcs } = await supabase
-        .from("calculation_runs")
-        .select("scope1, scope2, totalMWh, year")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (calcs && calcs.length > 0) {
-        setLatestCalc({
-          scope1: calcs[0].scope1,
-          scope2: calcs[0].scope2,
-          totalMWh: calcs[0].totalMWh,
-          year: calcs[0].year,
-        });
-      }
-
-      // Count activity records
-      const { count } = await supabase
-        .from("activity_records")
-        .select("*", { count: "exact", head: true })
-        .eq("organization_id", orgId);
-
-      setActivityCount(count ?? 0);
-      // Fetch contractual instruments
-      const { data: inst } = await supabase.from("contractual_instruments").select("*").eq("organization_id", orgId);
-      if (inst) setInstruments(inst);
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
+  const currentYr = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYr - i);
 
   return (
     <div className="space-y-6">
@@ -99,6 +182,29 @@ export default function EnergyEmissionsPage() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">Energy & Emissions</h1>
         <p className="text-gray-600">ESRS E1-1 to E1-9 · Track energy consumption, fuel usage, and calculate Scope 1 & 2 greenhouse gas emissions with country-specific emission factors.</p>
+      </div>
+
+      {/* Year selector */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-sm font-medium text-gray-700">Reporting year:</span>
+        {yearOptions.map((yr) => {
+          const isHistorical = yr < currentYr;
+          return (
+            <button
+              key={yr}
+              onClick={() => handleYearChange(yr)}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                selectedYear === yr
+                  ? "bg-primary-600 text-white"
+                  : isHistorical
+                  ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {yr}{isHistorical ? " 📜" : ""}
+            </button>
+          );
+        })}
       </div>
 
       {/* Quick actions */}
@@ -113,7 +219,7 @@ export default function EnergyEmissionsPage() {
             Enter energy and fuel consumption — natural gas, electricity, heating oil, company vehicles.
           </p>
           <p className="text-sm font-medium text-primary-700 mt-3">
-            {activityCount > 0 ? `${activityCount} records logged →` : "Get started →"}
+            {activityCount > 0 ? `${activityCount} records in ${selectedYear} →` : "Get started →"}
           </p>
         </Link>
 
@@ -139,7 +245,7 @@ export default function EnergyEmissionsPage() {
       {/* Summary snapshot */}
       {!loading && latestCalc && (
         <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Latest snapshot ({latestCalc.year})</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Snapshot ({selectedYear})</h2>
           <div className="grid grid-cols-4 gap-4">
             <div className="rounded-lg bg-gray-50 p-4 text-center">
               <p className="text-sm text-gray-500">Scope 1</p>
@@ -169,7 +275,7 @@ export default function EnergyEmissionsPage() {
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Contractual Instruments (Scope 2 Market-Based)</h2>
         <p className="text-sm text-gray-500 mb-4">Guarantees of Origin, PPAs, and RECs — used to calculate market-based Scope 2 emissions per GHG Protocol.</p>
-        
+
         {instruments.length > 0 && (
           <div className="space-y-2 mb-4">
             {instruments.map((inst: any) => (
@@ -195,10 +301,10 @@ export default function EnergyEmissionsPage() {
         </form>
       </div>
 
-            {!loading && !latestCalc && (
+      {!loading && !latestCalc && (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
           <div className="text-5xl mb-4">🌱</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No emissions data yet</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No emissions data for {selectedYear}</h2>
           <p className="text-gray-500 max-w-md mx-auto mb-6">
             Start by logging your energy and fuel consumption data, then run a calculation to see your Scope 1 & 2 emissions.
           </p>

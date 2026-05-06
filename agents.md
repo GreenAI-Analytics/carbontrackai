@@ -665,6 +665,7 @@ type EsgFeatureFlags = {
 - **Country overlays** — 8 EU member states with filing portals, factor authorities, labour law extensions
 - **Demo data** — comprehensive seed script for all ESG modules
 - **Emissions page crash** — fixed `Uncaught TypeError: e.emissionsTco2e is undefined` caused by JSON double-encoding in seed script + missing defensive checks in breakdown table render
+- **Climate page year-filtering** — added year selector + `reporting_period_id` filtering to Energy & Emissions page. Previously queried non-existent columns (`scope1`, `scope2`, `year`) on `calculation_runs` and counted activity records / contractual instruments across ALL periods. Now scoped to the selected reporting year like the Activity and Emissions pages.
 
 ### 🔔 Future / Not Yet Implemented
 
@@ -1194,6 +1195,7 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 - **Materiality page has no stakeholder engagement tab yet** — the `stakeholder_engagement` table exists with RLS, but the UI only has IRO Register, Matrix, and Summary tabs. A future step should add stakeholder engagement logging.
 - **Stakeholder engagement table not yet connected to the UI** — `stakeholder_engagement` table has RLS policies (migration 15) but no data entry forms exist.
 - **JSONB columns: never `JSON.stringify()` before insert** — when inserting into `JSONB` columns via Supabase JS client, pass JavaScript objects/arrays directly. Using `JSON.stringify()` causes double-encoding (the value becomes a JSON string literal instead of a JSON object). When spread back (`[...str]`), it explodes into characters. If you encounter `TypeError: can't access property "toFixed"` or similar on data from a JSONB column, check for double-encoding in the seed/insert path.
+- **`calculation_runs` stores scope rows, not a single row per period** — each row has a `scope_type` (`scope_1`, `scope_2_location`, `scope_2_market`) with `total_emissions` and `total_energy`. To get Scope 1 and Scope 2 totals, you must fetch ALL rows for a `reporting_period_id` and then `.find()` by `scope_type`. Do NOT `.limit(1)` or select non-existent columns like `scope1`/`scope2`/`year`.
 
 ### ✅ Resolved Issues
 
@@ -1205,6 +1207,8 @@ Migration 15 adds missing INSERT/UPDATE/DELETE RLS policies for:
 - **Double Materiality Implemented page** — replaced the "Coming soon" Implemented with a full working UI: assessment list, IRO Register CRUD, materiality matrix visualization, and summary with topic-level classification.
 - **Emissions page `TypeError: e.emissionsTco2e is undefined`** — seed script was `JSON.stringify()`-ing `breakdown` before inserting into a `JSONB` column, causing double-encoding. When read back and spread (`[...doubleEncodedString]`), it produced an array of characters instead of breakdown items. Fixed by: (1) removing `JSON.stringify()` in the seed script, (2) adding normalization in `displayData` construction that filters out non-object items, (3) adding `typeof` guards before `.toFixed()` calls in the render.
 
+- **Climate page not filtering by year** — Energy & Emissions page queried calculation_runs with non-existent columns (scope1, scope2, year), counted activity records across ALL periods, and contractual instruments weren't scoped to a reporting year. Added year selector + reporting_period_id filtering matching the Activity/Emissions page pattern.
+- **Reports page calculation_runs query bug** — queried with .limit(1) which only returned one scope_type row, and referenced non-existent columns (scope1, scope2, totalMWh). Fixed to fetch all rows for the period and aggregate by scope_type.
 ---
 
 ## 12. Naming Conventions
