@@ -174,6 +174,27 @@ export default function ActivityPage() {
     setSaving(false);
   }
 
+  const startEdit = (record: ActivityRecord) => {
+    setEditingId(record.id);
+    setEditQty(String(record.quantity));
+    setEditMonth(record.month ? String(record.month) : "");
+    setEditNotes(record.notes ?? "");
+  };
+
+  const cancelEdit = () => { setEditingId(null); };
+
+  const saveEdit = async (id: string) => {
+    if (!selectedPeriodId) return;
+    const { error } = await supabase.from("activity_records").update({
+      quantity: parseFloat(editQty) || 0,
+      month: editMonth ? parseInt(editMonth) : null,
+      notes: editNotes || null,
+    }).eq("id", id);
+    if (error) { setError(error.message); return; }
+    setEditingId(null);
+    await loadRecords(selectedPeriodId);
+  };
+
   async function handleDelete(id: string) {
     await supabase
       .from("activity_records")
