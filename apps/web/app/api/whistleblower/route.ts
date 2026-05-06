@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { whistleblowerSchema, parseBody } from "@/lib/validations";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 5 submissions per minute per IP
   const ip = getClientIp(request);
   const rl = checkRateLimit(ip, RATE_LIMITS.publicForm);
   if (!rl.allowed) {
@@ -55,13 +55,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Whistleblower insert error:", error);
+      logger.error("Failed to insert whistleblower case", { error: error.message });
       return NextResponse.json({ error: "Failed to record report" }, { status: 500 });
     }
 
     return NextResponse.json({ caseRef });
   } catch (err: unknown) {
-    console.error("Whistleblower API error:", err instanceof Error ? err.message : err);
+    logger.error("Whistleblower API error", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

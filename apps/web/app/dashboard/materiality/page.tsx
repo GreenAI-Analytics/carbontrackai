@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
 import type { MaterialityStatus } from "@/lib/materiality";
@@ -107,7 +108,7 @@ export default function DoubleMaterialityPage() {
   }, [router]);
 
   useEffect(() => {
-    loadAssessments().catch(console.error);
+    loadAssessments().catch((err: unknown) => logger.error("Failed to load materiality assessments", { error: err instanceof Error ? err.message : String(err) }));
   }, [loadAssessments]);
 
   async function handleCreate() {
@@ -141,7 +142,7 @@ export default function DoubleMaterialityPage() {
       .single();
 
     if (error) {
-      console.error("Failed to create assessment:", error);
+      logger.error("Failed to create materiality assessment", { error: error.message });
       alert("Failed to create assessment. Please try again.");
       setCreating(false);
       return;

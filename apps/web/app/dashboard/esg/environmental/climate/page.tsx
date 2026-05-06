@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
 import { contractualInstrumentSchema } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 import { formatTco2e, formatMWh } from "@/lib/calculations";
 
 type LatestCalc = {
@@ -158,7 +159,7 @@ export default function EnergyEmissionsPage() {
       vintage_year: parseInt(form.vintage.value) || undefined,
     });
     if (!parsed.success) {
-      console.error("Validation failed:", parsed.error.flatten());
+      logger.error("Contractual instrument validation failed", { details: parsed.error.flatten() });
       setInstLoading(false);
       return;
     }
@@ -175,7 +176,7 @@ export default function EnergyEmissionsPage() {
       vintage_year: parseInt(form.vintage.value) || null,
     });
     if (error) {
-      console.error("Failed to save instrument:", error.message);
+      logger.error("Failed to save contractual instrument", { error: error.message });
     } else {
       form.reset();
       if (orgId && selectedPeriodId) await fetchData(orgId, selectedPeriodId, selectedYear);
