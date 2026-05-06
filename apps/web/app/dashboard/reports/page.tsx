@@ -158,15 +158,16 @@ export default function ReportsPage() {
   }, [selectedPeriod]);
 
   async function generateSnapshot() {
-    if (!orgId || !selectedPeriod || !reportData) return;
+    if (!orgId || !selectedPeriod || !reportData) { alert("Missing data: orgId=" + orgId + " period=" + selectedPeriod); return; }
     const year = periods.find((p) => p.id === selectedPeriod)?.year ?? new Date().getFullYear();
-    await supabase.from("report_snapshots").insert({
+    const { data: inserted, error } = await supabase.from("report_snapshots").insert({
       organization_id: orgId,
       reporting_period_id: selectedPeriod,
       title: `ESG Report ${year}`,
       report_data: reportData,
       status: "final",
-    });
+    }).select();
+    if (error) { alert("Insert failed: " + error.message); return; }
     setGenerated(true);
     setTimeout(() => setGenerated(false), 3000);
     // Refresh snapshots
