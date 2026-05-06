@@ -46,6 +46,15 @@ export default function ReportsPage() {
     setGenerating(true);
 
     const pid = selectedPeriod;
+    // Fetch materiality and taxonomy assessment IDs first (cannot use SQL subqueries in .eq())
+    const [{ data: matAssess }, { data: taxAssess }] = await Promise.all([
+      supabase.from("materiality_assessments").select("id").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
+      supabase.from("taxonomy_assessments").select("id").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
+    ]);
+
+    const matAssessmentId = matAssess?.id || "00000000-0000-0000-0000-000000000000";
+    const taxAssessmentId = taxAssess?.id || "00000000-0000-0000-0000-000000000000";
+
     const [
       { data: org }, { data: hc }, { data: to }, { data: hse }, { data: tr }, { data: pg },
       { data: calc }, { data: act }, { data: board }, { data: eth }, { data: comp },
@@ -75,8 +84,8 @@ export default function ReportsPage() {
       supabase.from("biodiversity_sites").select("*").eq("organization_id", orgId),
       supabase.from("material_flows").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid),
       supabase.from("waste_generation").select("*").eq("organization_id", orgId).eq("reporting_period_id", pid),
-      supabase.from("materiality_iro").select("topic,title,double_materiality_score").eq("assessment_id", "(select id from materiality_assessments where organization_id=...)"), // fallback
-      supabase.from("taxonomy_activities").select("*").eq("assessment_id", "(select id from taxonomy_assessments where organization_id=...)"),
+      supabase.from("materiality_iro").select("topic,title,double_materiality_score").eq("assessment_id", matAssessmentId)
+      supabase.from("taxonomy_activities").select("*").eq("assessment_id", taxAssessmentId),
       supabase.from("strategy_business_model").select("narrative_description").eq("organization_id", orgId).eq("reporting_period_id", pid).single(),
       supabase.from("policy_documents").select("policy_title,esrs_reference").eq("organization_id", orgId),
       supabase.from("due_diligence_process").select("scope_area").eq("organization_id", orgId).eq("reporting_period_id", pid),
